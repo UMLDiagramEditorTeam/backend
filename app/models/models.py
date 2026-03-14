@@ -43,10 +43,10 @@ class DiagramType(str, Enum):
     SEQUENCE = 'sequence'
 
 
-class RealtionType(str, Enum):
+class RelationType(str, Enum):
     RELATION = 'relation'
     ONE = 'one'
-    MANY = 'mnay'
+    MANY = 'many'
     ONE_AND_ONLY_ONE = 'one and ONLY one'
     ZERO_OR_ONE = 'zero or one'
     ONE_OR_MANY = 'one or many'
@@ -175,8 +175,8 @@ class Argument(BaseModel, table=True):
 
 class Relation(BaseModel, table=True):
     name: str = Field(max_length=100)
-    start_type: RealtionType = Field(default=RealtionType.RELATION)
-    end_type: RealtionType = Field(default=RealtionType.RELATION)
+    start_type: RelationType = Field(default=RelationType.RELATION)
+    end_type: RelationType = Field(default=RelationType.RELATION)
     start_class_id: UUID | None = Field(default=None, foreign_key='class.id')
     start_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
     end_class_id: UUID | None = Field(default=None, foreign_key='class.id')
