@@ -1,12 +1,10 @@
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models import WindowModel
     from app.models.classes import ClassModel
     from app.models.interfaces import InterfaceModel
 
@@ -19,7 +17,7 @@ class TileBase(SQLModel):
 
 
 class TilePublic(BaseModel, TileBase):
-    window_id: UUID
+    pass
 
 
 class TileCreate(TileBase):
@@ -36,8 +34,5 @@ class TileUpdate(SQLModel):
 class TileModel(TilePublic, table=True):
     __tablename__ = 'tile'
 
-    window_id: UUID = Field(foreign_key='window.id')
-
-    window: 'WindowModel' = Relationship(back_populates='tiles')
     classes: list['ClassModel'] = Relationship(back_populates='tile')
     interfaces: list['InterfaceModel'] = Relationship(back_populates='tile')
