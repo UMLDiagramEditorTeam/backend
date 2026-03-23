@@ -1,0 +1,44 @@
+from typing import TYPE_CHECKING
+from uuid import UUID
+
+from sqlmodel import Field, Relationship, SQLModel
+
+from app.models.base import BaseModel
+from app.models.enums import AccessModifier
+
+if TYPE_CHECKING:
+    from app.models.classes import ClassModel
+
+
+class AttributeBase(SQLModel):
+    name: str = Field(max_length=100)
+    access_modifier: AccessModifier | None = Field(default=AccessModifier.DEFAULT)
+    type: str = Field(max_length=100)
+    is_final: bool = Field(default=False)
+    is_static: bool = Field(default=False)
+    default_value: str | None = Field(default=None)
+
+
+class AttributePublic(BaseModel, AttributeBase):
+    class_id: UUID
+
+
+class AttributeCreate(AttributeBase):
+    pass
+
+
+class AttributeUpdate(SQLModel):
+    name: str | None = Field(default=None, max_length=100)
+    access_modifier: AccessModifier | None = Field(default=None)
+    type: str | None = Field(default=None, max_length=100)
+    is_final: bool | None = Field(default=None)
+    is_static: bool | None = Field(default=None)
+    default_value: str | None = Field(default=None)
+
+
+class AttributeModel(AttributePublic, table=True):
+    __tablename__ = 'attribute'
+
+    class_id: UUID = Field(foreign_key='class.id')
+
+    class_: 'ClassModel' = Relationship(back_populates='attributes')
