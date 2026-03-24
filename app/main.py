@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.core.database import engine
+from app.db.database import engine
 from app.routers import auth, diagrams, pages
 
 
