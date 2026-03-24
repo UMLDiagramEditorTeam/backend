@@ -9,15 +9,40 @@
 
 - @Ryhsjs
 
+## Переменные среды
+
+Перед запуском необходимо указать переменные среды
+
+Шаблон файла переменных среды - `.env.example`
+
+Переменные среды указать в файле `.env`
+
+| Title   | Description | Type   | Default   |
+|---------|-------------|--------|-----------|
+| DB_HOST | DB host     | string | localhost |
+| DB_PORT | DB port     | number | 5432      |
+| DB_USER | DB username | string | postgres  |
+| DB_PASS | DB password | string | password  |
+| DB_NAME | DB name     | string | postgres  |
 
 ## Как запустить проект
 
 Для запуска проекта требуется менеджер зависимостей [uv](https://docs.astral.sh/uv/)
 
-Нужно сколонировать репозиторий, далее:
+Нужно клонировать репозиторий, далее:
 
 ```
 uv sync
 
 uv run fastapi dev main.py
 ```
+
+## Миграции
+
+Проект использует **Alembic** для управления миграциями.
+
+- **Создать миграцию:** `alembic revision --autogenerate -m "описание"`
+- **Применить:** `alembic upgrade head`
+- **Откатить:** `alembic downgrade -1`
+
+Перед выполнением команд убедитесь, что заполнен `.env` и запущен PostgreSQL.
