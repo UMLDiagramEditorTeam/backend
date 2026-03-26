@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 class ArgumentBase(SQLModel):
     name: str = Field(max_length=100)
     type: str = Field(max_length=100)
+    order_num: int = Field(ge=0)
     default_value: str | None = Field(default=None)
 
 
@@ -23,10 +24,8 @@ class ArgumentCreate(ArgumentBase):
     pass
 
 
-class ArgumentUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
-    type: str | None = Field(default=None, max_length=100)
-    default_value: str | None = Field(default=None)
+class ArgumentUpdate(ArgumentBase):
+    pass
 
 
 class ArgumentModel(ArgumentPublic, table=True):

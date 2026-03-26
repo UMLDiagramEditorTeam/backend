@@ -10,35 +10,39 @@ if TYPE_CHECKING:
     from app.models.attributes import AttributeModel
     from app.models.methods import MethodModel
     from app.models.relations import RelationModel
-    from app.models.tiles import TileModel
+    from app.models.tiles import TileCreate, TileModel, TileUpdate
+    from app.models.windows import WindowModel
 
 
 class ClassBase(SQLModel):
     name: str = Field(max_length=100)
-    access_modifier: AccessModifier | None = Field(default=AccessModifier.PUBLIC)
+    access_modifier: AccessModifier | None = Field(default=None)
     is_abstract: bool = Field(default=False)
 
 
 class ClassPublic(BaseModel, ClassBase):
-    tile_id: UUID
+    tile_id: UUID | None
+    window_id: UUID
 
 
 class ClassCreate(ClassBase):
-    tile_id: UUID
+    tile: TileCreate | None
 
 
 class ClassUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=100)
     access_modifier: AccessModifier | None = Field(default=None)
     is_abstract: bool | None = Field(default=None)
-    tile_id: UUID | None = Field(default=None)
+    tile: TileUpdate | None
 
 
 class ClassModel(ClassPublic, table=True):
     __tablename__ = 'class'
 
-    tile_id: UUID = Field(foreign_key='tile.id')
+    tile_id: UUID | None = Field(default=None, foreign_key='tile.id')
+    window_id: UUID = Field(foreign_key='window.id')
 
+    window: 'WindowModel' = Relationship(back_populates='window')
     tile: 'TileModel' = Relationship(back_populates='classes')
     attributes: list['AttributeModel'] = Relationship(back_populates='class_')
     methods: list['MethodModel'] = Relationship(back_populates='class_')

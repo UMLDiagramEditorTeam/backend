@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 class MethodBase(SQLModel):
     name: str = Field(max_length=100)
-    access_modifier: AccessModifier = Field(default=AccessModifier.DEFAULT)
+    access_modifier: AccessModifier | None = Field(default=None)
     return_type: str = Field(max_length=100)
     is_final: bool = Field(default=False)
     is_static: bool = Field(default=False)
@@ -27,7 +27,7 @@ class MethodPublic(BaseModel, MethodBase):
 
 
 class MethodCreate(MethodBase):
-    parameters: list['ArgumentCreate'] = Field(default=[])
+    arguments: list['ArgumentCreate'] = Field(default=[])
 
 
 class MethodUpdate(SQLModel):
@@ -37,7 +37,7 @@ class MethodUpdate(SQLModel):
     is_final: bool | None = Field(default=None)
     is_static: bool | None = Field(default=None)
     is_abstract: bool | None = Field(default=None)
-    parameters: list['ArgumentUpdate'] | None = Field(default=None)
+    arguments: list['ArgumentUpdate'] = Field(default=[])
 
 
 class MethodModel(MethodPublic, table=True):

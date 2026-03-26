@@ -18,8 +18,8 @@ class RelationType(str, Enum):
     ONE = 'one'
     MANY = 'many'
     ONE_AND_ONLY_ONE = 'one and ONLY one'
-    ZERO_OR_ONE = 'zero or one'
     ONE_OR_MANY = 'one or many'
+    ZERO_OR_ONE = 'zero or one'
     ZERO_OR_MANY = 'zero or many'
 
 

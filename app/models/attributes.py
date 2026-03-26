@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class AttributeBase(SQLModel):
     name: str = Field(max_length=100)
-    access_modifier: AccessModifier | None = Field(default=AccessModifier.DEFAULT)
+    access_modifier: AccessModifier | None = Field(default=None)
     type: str = Field(max_length=100)
     is_final: bool = Field(default=False)
     is_static: bool = Field(default=False)

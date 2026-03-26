@@ -8,7 +8,8 @@ from app.models.base import BaseModel
 if TYPE_CHECKING:
     from app.models.methods import MethodModel
     from app.models.relations import RelationModel
-    from app.models.tiles import TileModel
+    from app.models.tiles import TileCreate, TileModel, TileUpdate
+    from app.models.windows import WindowModel
 
 
 class InterfaceBase(SQLModel):
@@ -16,23 +17,26 @@ class InterfaceBase(SQLModel):
 
 
 class InterfacePublic(BaseModel, InterfaceBase):
-    tile_id: UUID
+    tile_id: UUID | None
+    window_id: UUID
 
 
 class InterfaceCreate(InterfaceBase):
-    tile_id: UUID
+    tile: TileCreate | None
 
 
 class InterfaceUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=100)
-    tile_id: UUID | None = Field(default=None)
+    tile: TileUpdate | None
 
 
 class InterfaceModel(InterfacePublic, table=True):
     __tablename__ = 'interface'
 
     tile_id: UUID = Field(foreign_key='tile.id')
+    window_id: UUID = Field(foreign_key='window.id')
 
+    window: 'WindowModel' = Relationship(back_populates='window')
     tile: 'TileModel' = Relationship(back_populates='interfaces')
     methods: list['MethodModel'] = Relationship(back_populates='interface')
     relation_start: list['RelationModel'] = Relationship(
