@@ -3,6 +3,7 @@ from uuid import UUID
 
 from generics import get_filled_type
 from pydantic import BaseModel as PydanticBaseModel
+from sqlalchemy import func
 from sqlalchemy.sql._typing import (
     _ColumnExpressionArgument,
 )
@@ -10,7 +11,8 @@ from sqlmodel import and_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.dependencies.session import SessionDep
-from app.models.base import BaseModel
+from app.models import BaseModel
+from app.schemas import CommonListFilters
 
 type FilterType = _ColumnExpressionArgument[bool] | bool
 
@@ -33,9 +35,7 @@ class Repository[Model: BaseModel]:
 
     async def fetch(
         self,
-        filters: Optional[PydanticBaseModel] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
+        filters: Optional[CommonListFilters] = None,
     ) -> Sequence[Model]:
         select_statement = select(self.model)
         if filters is not None:
@@ -49,12 +49,28 @@ class Repository[Model: BaseModel]:
                         filter_statement, getattr(self.model, key) == value
                     )
             select_statement = select_statement.where(filter_statement)
-        if offset is not None:
-            select_statement = select_statement.offset(offset)
-        if limit is not None:
-            select_statement = select_statement.limit(limit)
+        if filters.offset is not None:
+            select_statement = select_statement.offset(filters.offset)
+        if filters.limit is not None:
+            select_statement = select_statement.limit(filters.limit)
         entities = await self.__session.exec(select_statement)
         return entities.all()
+
+    async def count_all(self, filters: Optional[PydanticBaseModel] = None) -> int:
+        count_statement = select(func.count()).select_from(self.model)
+        if filters is not None:
+            filter_statement = and_(True)
+            filters_dict = filters.model_dump(exclude_unset=True)
+            for key, value in filters_dict.items():
+                if not hasattr(self.__model, key):
+                    continue
+                if value is not None:
+                    filter_statement = and_(
+                        filter_statement, getattr(self.model, key) == value
+                    )
+            count_statement = count_statement.where(filter_statement)
+        result = await self.__session.exec(count_statement)
+        return result.first()
 
     async def save(self, instance: Model) -> Model:
         self.__session.add(instance)
