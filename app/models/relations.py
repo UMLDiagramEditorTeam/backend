@@ -20,15 +20,15 @@ class RelationBase(SQLModel):
 class RelationPublic(BaseModel, RelationBase):
     start_id: UUID
     end_id: UUID
-    start_type: EntityType
-    end_type: EntityType
+    start_entity_type: EntityType
+    end_entity_type: EntityType
 
 
 class RelationCreate(RelationBase):
     start_id: UUID
     end_id: UUID
-    start_type: EntityType
-    end_type: EntityType
+    start_entity_type: EntityType
+    end_entity_type: EntityType
 
 
 class RelationUpdate(SQLModel):
@@ -38,7 +38,7 @@ class RelationUpdate(SQLModel):
     end_id: UUID | None = Field(default=None)
 
 
-class RelationModel(RelationPublic, table=True):
+class RelationModel(RelationBase, table=True):
     __tablename__ = 'relation'
 
     start_class_id: UUID | None = Field(default=None, foreign_key='class.id')

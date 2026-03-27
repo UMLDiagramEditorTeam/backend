@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from app.models.classes import ClassModel
     from app.models.interfaces import InterfaceModel
     from app.models.projects import ProjectModel
-    from app.models.users import UserModel
 
 
 class WindowBase(SQLModel):
@@ -20,7 +19,6 @@ class WindowBase(SQLModel):
 
 class WindowPublic(BaseModel, WindowBase):
     project_id: UUID
-    user_id: UUID | None = None
 
 
 class WindowCreate(WindowBase):
@@ -36,9 +34,7 @@ class WindowModel(WindowPublic, table=True):
     __tablename__ = 'window'
 
     project_id: UUID = Field(foreign_key='project.id')
-    user_id: UUID | None = Field(default=None, foreign_key='user.id')
 
     classes: list[ClassModel] = Relationship(back_populates='window')
     interfaces: list[InterfaceModel] = Relationship(back_populates='window')
     project: 'ProjectModel' = Relationship(back_populates='windows')
-    user: 'UserModel' = Relationship(back_populates='windows')

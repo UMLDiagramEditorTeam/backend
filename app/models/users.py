@@ -6,7 +6,6 @@ from app.models.base import BaseModel
 
 if TYPE_CHECKING:
     from app.models.projects import ProjectModel
-    from app.models.windows import WindowModel
 
 
 class UserBase(SQLModel):
@@ -34,4 +33,3 @@ class UserModel(UserPublic, table=True):
     password_hash: str = Field(max_length=100)
 
     projects: list['ProjectModel'] = Relationship(back_populates='user')
-    windows: list['WindowModel'] = Relationship(back_populates='user')

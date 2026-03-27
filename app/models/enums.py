@@ -10,7 +10,6 @@ class AccessModifier(str, Enum):
 
 class DiagramType(str, Enum):
     CLASS_DIAGRAM = 'class_diagram'
-    SEQUENCE_DIAGRAM = 'sequence_diagram'
 
 
 class RelationType(str, Enum):
