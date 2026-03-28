@@ -5,6 +5,5 @@ from app.schemas.base import CommonListFilters
 
 
 class InterfaceFilters(CommonListFilters):
-    window_id: Optional[UUID] = None
-    tile_id: Optional[UUID] = None
+    window_id: UUID
     name: Optional[str] = None

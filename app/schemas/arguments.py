@@ -8,3 +8,4 @@ class ArgumentFilters(CommonListFilters):
     method_id: Optional[UUID] = None
     name: Optional[str] = None
     type: Optional[str] = None
+    order_num: Optional[int] = None

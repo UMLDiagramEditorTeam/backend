@@ -7,7 +7,7 @@ from app.schemas.base import CommonListFilters
 
 class RelationFilters(CommonListFilters):
     name: Optional[str] = None
-    strat_type: Optional[RelationType] = None
+    start_type: Optional[RelationType] = None
     end_type: Optional[RelationType] = None
     start_class_id: Optional[UUID] = None
     start_interface_id: Optional[UUID] = None

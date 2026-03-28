@@ -6,7 +6,6 @@ from app.schemas.base import CommonListFilters
 
 
 class WindowFilters(CommonListFilters):
-    project_id: Optional[UUID] = None
-    user_id: Optional[UUID] = None
+    project_id: UUID
     name: Optional[str] = None
     type: Optional[DiagramType] = None

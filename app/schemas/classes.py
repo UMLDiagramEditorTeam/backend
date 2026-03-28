@@ -6,8 +6,7 @@ from app.schemas.base import CommonListFilters
 
 
 class ClassFilters(CommonListFilters):
-    window_id: Optional[UUID] = None
-    tile_id: Optional[UUID] = None
+    window_id: UUID
     name: Optional[str] = None
     access_modifier: Optional[AccessModifier] = None
     is_abstract: Optional[bool] = None
