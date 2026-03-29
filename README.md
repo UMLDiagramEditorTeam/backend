@@ -34,15 +34,19 @@
 ```
 uv sync
 
-uv run fastapi dev main.py
+uv run fastapi dev
 ```
 
 ## Миграции
 
 Проект использует **Alembic** для управления миграциями.
 
-- **Создать миграцию:** `alembic revision --autogenerate -m "описание"`
-- **Применить:** `alembic upgrade head`
-- **Откатить:** `alembic downgrade -1`
+- **Создать миграцию:** `uv run alembic revision --autogenerate -m "описание"`
+- **Применить:** `uv run alembic upgrade head`
+- **Откатить:** `uv run alembic downgrade -1`
 
 Перед выполнением команд убедитесь, что заполнен `.env` и запущен PostgreSQL.
+
+## pre-commit
+
+Установка pre-commit: `uv run pre-commit install`

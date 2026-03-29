@@ -5,10 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
     "django>=5.2.12",
     "fastapi[standard]>=0.135.1",
     "python-generics>=0.2.4",
-    "ruff>=0.15.4",
     "sqlmodel>=0.0.37",
 ]
 
@@ -19,10 +20,14 @@ dev = [
     "ruff>=0.15.4",
 ]
 
+[tool.fastapi]
+entrypoint = "app.main:app"
+
 [tool.ruff]
 line-length = 88
 indent-width = 4
 target-version = "py313"
+exclude = ["migrations"]
 
 [tool.ruff.lint]
 fixable = ["ALL"]
