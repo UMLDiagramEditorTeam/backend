@@ -3,16 +3,18 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.dependencies.session import SessionDep
-from app.models import UserModel
-from app.models.arguments import ArgumentModel
-from app.models.attributes import AttributeModel
-from app.models.classes import ClassModel
-from app.models.interfaces import InterfaceModel
-from app.models.methods import MethodModel
-from app.models.projects import ProjectModel
-from app.models.relations import RelationModel
-from app.models.tiles import TileModel
-from app.models.windows import WindowModel
+from app.models import (
+    ArgumentModel,
+    AttributeModel,
+    ClassModel,
+    InterfaceModel,
+    MethodModel,
+    ProjectModel,
+    RelationModel,
+    TileModel,
+    UserModel,
+    WindowModel,
+)
 from app.utils.repository import Repository
 
 
