@@ -1,4 +1,3 @@
-from .arguments import *  # noqa: F403
 from .attributes import *  # noqa: F403
 from .base import *  # noqa: F403
 from .classes import *  # noqa: F403
