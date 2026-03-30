@@ -20,8 +20,3 @@ class RelationType(str, Enum):
     ONE_OR_MANY = 'one or many'
     ZERO_OR_ONE = 'zero or one'
     ZERO_OR_MANY = 'zero or many'
-
-
-class EntityType(str, Enum):
-    CLASS = 'class'
-    INTERFACE = 'interface'

@@ -5,12 +5,12 @@ from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import BaseModel
 from app.models.enums import AccessModifier
+from app.models.tiles import TileCreate, TileModel, TileUpdate
 
 if TYPE_CHECKING:
     from app.models.attributes import AttributeModel
     from app.models.methods import MethodModel
     from app.models.relations import RelationModel
-    from app.models.tiles import TileCreate, TileModel, TileUpdate
     from app.models.windows import WindowModel
 
 
@@ -26,14 +26,14 @@ class ClassPublic(BaseModel, ClassBase):
 
 
 class ClassCreate(ClassBase):
-    tile: TileCreate | None
+    tile: TileCreate | None = None
 
 
 class ClassUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=100)
     access_modifier: AccessModifier | None = Field(default=None)
     is_abstract: bool | None = Field(default=None)
-    tile: TileUpdate | None
+    tile: TileUpdate | None = None
 
 
 class ClassModel(ClassPublic, table=True):
@@ -42,9 +42,15 @@ class ClassModel(ClassPublic, table=True):
     tile_id: UUID | None = Field(default=None, foreign_key='tile.id')
     window_id: UUID = Field(foreign_key='window.id')
 
-    window: 'WindowModel' = Relationship(back_populates='window')
+    window: 'WindowModel' = Relationship(back_populates='classes')
     tile: 'TileModel' = Relationship(back_populates='classes')
     attributes: list['AttributeModel'] = Relationship(back_populates='class_')
     methods: list['MethodModel'] = Relationship(back_populates='class_')
-    relations_start: list['RelationModel'] = Relationship(back_populates='start_class')
-    relations_end: list['RelationModel'] = Relationship(back_populates='end_class')
+    relations_start: list['RelationModel'] = Relationship(
+        back_populates='start_class',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.start_class_id'},
+    )
+    relations_end: list['RelationModel'] = Relationship(
+        back_populates='end_class',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.end_class_id'},
+    )

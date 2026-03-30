@@ -24,10 +24,6 @@ class ArgumentCreate(ArgumentBase):
     pass
 
 
-class ArgumentUpdate(ArgumentBase):
-    pass
-
-
 class ArgumentModel(ArgumentPublic, table=True):
     __tablename__ = 'argument'
 

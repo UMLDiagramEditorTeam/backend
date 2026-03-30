@@ -24,7 +24,6 @@ class UserCreate(UserBase):
 class UserUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=100)
     email: str | None = Field(default=None, max_length=100)
-    password: str | None = Field(default=None, max_length=50, min_length=6)
 
 
 class UserModel(UserPublic, table=True):

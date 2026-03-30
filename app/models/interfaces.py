@@ -4,11 +4,11 @@ from uuid import UUID
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import BaseModel
+from app.models.tiles import TileCreate, TileModel, TileUpdate
 
 if TYPE_CHECKING:
     from app.models.methods import MethodModel
     from app.models.relations import RelationModel
-    from app.models.tiles import TileCreate, TileModel, TileUpdate
     from app.models.windows import WindowModel
 
 
@@ -22,12 +22,12 @@ class InterfacePublic(BaseModel, InterfaceBase):
 
 
 class InterfaceCreate(InterfaceBase):
-    tile: TileCreate | None
+    tile: TileCreate | None = None
 
 
 class InterfaceUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=100)
-    tile: TileUpdate | None
+    tile: TileUpdate | None = None
 
 
 class InterfaceModel(InterfacePublic, table=True):
@@ -36,10 +36,14 @@ class InterfaceModel(InterfacePublic, table=True):
     tile_id: UUID = Field(foreign_key='tile.id')
     window_id: UUID = Field(foreign_key='window.id')
 
-    window: 'WindowModel' = Relationship(back_populates='window')
+    window: 'WindowModel' = Relationship(back_populates='interfaces')
     tile: 'TileModel' = Relationship(back_populates='interfaces')
     methods: list['MethodModel'] = Relationship(back_populates='interface')
     relation_start: list['RelationModel'] = Relationship(
-        back_populates='start_interface'
+        back_populates='start_interface',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.start_interface_id'},
     )
-    relation_end: list['RelationModel'] = Relationship(back_populates='end_interface')
+    relation_end: list['RelationModel'] = Relationship(
+        back_populates='end_interface',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.end_interface_id'},
+    )

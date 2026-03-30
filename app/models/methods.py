@@ -3,11 +3,12 @@ from uuid import UUID
 
 from sqlmodel import CheckConstraint, Field, Relationship, SQLModel
 
+from app.models.arguments import ArgumentCreate
 from app.models.base import BaseModel
 from app.models.enums import AccessModifier
 
 if TYPE_CHECKING:
-    from app.models.arguments import ArgumentCreate, ArgumentModel, ArgumentUpdate
+    from app.models.arguments import ArgumentModel
     from app.models.classes import ClassModel
     from app.models.interfaces import InterfaceModel
 
@@ -22,8 +23,8 @@ class MethodBase(SQLModel):
 
 
 class MethodPublic(BaseModel, MethodBase):
-    class_id: UUID | None
-    interface_id: UUID | None = None
+    class_id: UUID | None = Field(default=None)
+    interface_id: UUID | None = Field(default=None)
 
 
 class MethodCreate(MethodBase):
@@ -37,7 +38,7 @@ class MethodUpdate(SQLModel):
     is_final: bool | None = Field(default=None)
     is_static: bool | None = Field(default=None)
     is_abstract: bool | None = Field(default=None)
-    arguments: list['ArgumentUpdate'] = Field(default=[])
+    arguments: list['ArgumentCreate'] = Field(default=[])
 
 
 class MethodModel(MethodPublic, table=True):
