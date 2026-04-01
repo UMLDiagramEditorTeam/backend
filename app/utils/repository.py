@@ -4,17 +4,12 @@ from uuid import UUID
 from generics import get_filled_type
 from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import func
-from sqlalchemy.sql._typing import (
-    _ColumnExpressionArgument,
-)
+from sqlalchemy.orm import selectinload
 from sqlmodel import and_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.dependencies.session import SessionDep
 from app.models import BaseModel
-from app.schemas import CommonListFilters
-
-type FilterType = _ColumnExpressionArgument[bool] | bool
 
 
 class Repository[Model: BaseModel]:
@@ -33,44 +28,43 @@ class Repository[Model: BaseModel]:
     async def get(self, pk: UUID) -> Optional[Model]:
         return await self.__session.get(self.model, pk)
 
-    async def fetch(
-        self,
-        filters: Optional[CommonListFilters] = None,
-    ) -> Sequence[Model]:
-        select_statement = select(self.model)
+    def prepare_statement(self, statement, **filters):
         if filters is not None:
             filter_statement = and_(True)
-            filters_dict = filters.model_dump(exclude_unset=True)
-            for key, value in filters_dict.items():
-                if not hasattr(self.__model, key):
+            for key, value in filters.items():
+                if not hasattr(self.model, key):
                     continue
                 if value is not None:
                     filter_statement = and_(
                         filter_statement, getattr(self.model, key) == value
                     )
-            select_statement = select_statement.where(filter_statement)
-        if filters.offset is not None:
-            select_statement = select_statement.offset(filters.offset)
-        if filters.limit is not None:
-            select_statement = select_statement.limit(filters.limit)
+            statement = statement.where(filter_statement)
+        return statement
+
+    async def fetch(
+        self, relations: list[str] | None = None, **filters
+    ) -> Sequence[Model]:
+        select_statement = select(self.model)
+        select_statement = self.prepare_statement(select_statement, **filters)
+
+        if relations is not None:
+            for relation in relations:
+                select_statement = select_statement.options(
+                    selectinload(getattr(self.model, relation))
+                )
+
+        if filters.get('offset') is not None:
+            select_statement = select_statement.offset(filters['offset'])
+        if filters.get('limit') is not None:
+            select_statement = select_statement.limit(filters['limit'])
         entities = await self.__session.exec(select_statement)
         return entities.all()
 
-    async def count_all(self, filters: Optional[PydanticBaseModel] = None) -> int:
+    async def count_all(self, **filters) -> int:
         count_statement = select(func.count()).select_from(self.model)
-        if filters is not None:
-            filter_statement = and_(True)
-            filters_dict = filters.model_dump(exclude_unset=True)
-            for key, value in filters_dict.items():
-                if not hasattr(self.__model, key):
-                    continue
-                if value is not None:
-                    filter_statement = and_(
-                        filter_statement, getattr(self.model, key) == value
-                    )
-            count_statement = count_statement.where(filter_statement)
+        count_statement = self.prepare_statement(count_statement, **filters)
         result = await self.__session.exec(count_statement)
-        return result.first()
+        return result.one()
 
     async def save(self, instance: Model) -> Model:
         self.__session.add(instance)
