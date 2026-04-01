@@ -1,26 +1,34 @@
-from contextlib import asynccontextmanager
+from fastapi import APIRouter, FastAPI
 
-from fastapi import FastAPI
+from app.routers import (
+    attributes,
+    classes,
+    interfaces,
+    methods,
+    projects,
+    relations,
+    users,
+    windows,
+)
 
-from app.db.database import engine
-from app.routers import auth, diagrams, pages
+api_prefix = '/api'
+app = FastAPI(
+    title='UML Diagram Editor API',
+    version='1.1.1',
+    openapi_url=f'{api_prefix}/openapi.json',
+    docs_url=f'{api_prefix}/docs',
+    redoc_url=f'{api_prefix}/redoc',
+)
 
+app_router = APIRouter(prefix=f'{api_prefix}/v1')
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    # async with engine.begin() as conn:
-    #    await conn.run_sync(Base.metadata.create_all)
-    yield
-    await engine.dispose()
-
-
-app = FastAPI(title='UML Constructor API (Mock)', lifespan=lifespan)
-
-app.include_router(auth.router)
-app.include_router(diagrams.router)
-app.include_router(pages.router)
-
-
-@app.get('/')
-def root():
-    return {'message': 'UML Constructor API Mock Server'}
+app_router.include_router(users.router)
+app_router.include_router(projects.router)
+app_router.include_router(windows.router)
+app_router.include_router(classes.router)
+app_router.include_router(interfaces.router)
+app_router.include_router(methods.class_methods_router)
+app_router.include_router(methods.interface_methods_router)
+app_router.include_router(attributes.router)
+app_router.include_router(relations.router)
+app.include_router(app_router)
