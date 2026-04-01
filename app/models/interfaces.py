@@ -1,14 +1,15 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models.base import BaseModel
+from app.models.tiles import TileCreate, TileModel, TilePublic, TileUpdate
 
 if TYPE_CHECKING:
     from app.models.methods import MethodModel
     from app.models.relations import RelationModel
-    from app.models.tiles import TileModel
+    from app.models.windows import WindowModel
 
 
 class InterfaceBase(SQLModel):
@@ -16,26 +17,44 @@ class InterfaceBase(SQLModel):
 
 
 class InterfacePublic(BaseModel, InterfaceBase):
-    tile_id: UUID
+    window_id: UUID
+    tile: TilePublic
+
+    @classmethod
+    def from_model(cls, obj: 'InterfaceModel'):
+        return cls(**obj.model_dump(), tile=obj.tile)
 
 
 class InterfaceCreate(InterfaceBase):
-    tile_id: UUID
+    tile: TileCreate | None = None
 
 
 class InterfaceUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=100)
-    tile_id: UUID | None = Field(default=None)
+    tile: TileUpdate | None = None
 
 
-class InterfaceModel(InterfacePublic, table=True):
+class InterfaceModel(BaseModel, InterfaceBase, table=True):
     __tablename__ = 'interface'
 
     tile_id: UUID = Field(foreign_key='tile.id')
+    window_id: UUID = Field(foreign_key='window.id')
 
-    tile: 'TileModel' = Relationship(back_populates='interfaces')
+    window: 'WindowModel' = Relationship(back_populates='interfaces')
+    tile: 'TileModel' = Relationship(
+        back_populates='interfaces',
+        sa_relationship_kwargs={'lazy': 'selectin'},
+    )
     methods: list['MethodModel'] = Relationship(back_populates='interface')
     relation_start: list['RelationModel'] = Relationship(
-        back_populates='start_interface'
+        back_populates='start_interface',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.start_interface_id'},
     )
-    relation_end: list['RelationModel'] = Relationship(back_populates='end_interface')
+    relation_end: list['RelationModel'] = Relationship(
+        back_populates='end_interface',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.end_interface_id'},
+    )
+
+    __table_args__ = (
+        UniqueConstraint('window_id', 'name', name='uq_interface_window_name'),
+    )

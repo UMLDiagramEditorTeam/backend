@@ -1,46 +1,67 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models.base import BaseModel
 from app.models.enums import AccessModifier
+from app.models.tiles import TileCreate, TileModel, TilePublic, TileUpdate
 
 if TYPE_CHECKING:
     from app.models.attributes import AttributeModel
     from app.models.methods import MethodModel
     from app.models.relations import RelationModel
-    from app.models.tiles import TileModel
+    from app.models.windows import WindowModel
 
 
 class ClassBase(SQLModel):
     name: str = Field(max_length=100)
-    access_modifier: AccessModifier | None = Field(default=AccessModifier.PUBLIC)
+    access_modifier: AccessModifier | None = Field(default=None)
     is_abstract: bool = Field(default=False)
 
 
 class ClassPublic(BaseModel, ClassBase):
-    tile_id: UUID
+    window_id: UUID
+    tile: TilePublic
+
+    @classmethod
+    def from_model(cls, obj: 'ClassModel'):
+        return cls(**obj.model_dump(), tile=obj.tile)
 
 
 class ClassCreate(ClassBase):
-    tile_id: UUID
+    tile: TileCreate | None = None
 
 
 class ClassUpdate(SQLModel):
     name: str | None = Field(default=None, max_length=100)
     access_modifier: AccessModifier | None = Field(default=None)
     is_abstract: bool | None = Field(default=None)
-    tile_id: UUID | None = Field(default=None)
+    tile: TileUpdate | None = None
 
 
-class ClassModel(ClassPublic, table=True):
+class ClassModel(BaseModel, ClassBase, table=True):
     __tablename__ = 'class'
 
-    tile_id: UUID = Field(foreign_key='tile.id')
+    tile_id: UUID | None = Field(default=None, foreign_key='tile.id')
+    window_id: UUID = Field(foreign_key='window.id')
 
-    tile: 'TileModel' = Relationship(back_populates='classes')
+    window: 'WindowModel' = Relationship(back_populates='classes')
+    tile: 'TileModel' = Relationship(
+        back_populates='classes',
+        sa_relationship_kwargs={'lazy': 'selectin'},
+    )
     attributes: list['AttributeModel'] = Relationship(back_populates='class_')
     methods: list['MethodModel'] = Relationship(back_populates='class_')
-    relations_start: list['RelationModel'] = Relationship(back_populates='start_class')
-    relations_end: list['RelationModel'] = Relationship(back_populates='end_class')
+    relations_start: list['RelationModel'] = Relationship(
+        back_populates='start_class',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.start_class_id'},
+    )
+    relations_end: list['RelationModel'] = Relationship(
+        back_populates='end_class',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.end_class_id'},
+    )
+
+    __table_args__ = (
+        UniqueConstraint('window_id', 'name', name='uq_class_window_name'),
+    )
