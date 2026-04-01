@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models.base import BaseModel
 from app.models.enums import DiagramType
@@ -40,3 +40,7 @@ class WindowModel(WindowPublic, table=True):
     interfaces: list['InterfaceModel'] = Relationship(back_populates='window')
     project: 'ProjectModel' = Relationship(back_populates='windows')
     relations: list['RelationModel'] = Relationship(back_populates='window')
+
+    __table_args__ = (
+        UniqueConstraint('project_id', 'name', name='uq_window_project_name'),
+    )

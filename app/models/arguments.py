@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models.base import BaseModel
 
@@ -30,3 +30,7 @@ class ArgumentModel(ArgumentPublic, table=True):
     method_id: UUID = Field(foreign_key='method.id')
 
     method: 'MethodModel' = Relationship(back_populates='arguments')
+
+    __table_args__ = (
+        UniqueConstraint('method_id', 'name', name='uq_argument_method_name'),
+    )

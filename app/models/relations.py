@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import CheckConstraint, Field, Relationship, SQLModel
+from sqlmodel import CheckConstraint, Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models.base import BaseModel
 from app.models.enums import RelationType
@@ -78,5 +78,13 @@ class RelationModel(RelationPublic, table=True):
                 'OR (end_class_id IS NULL AND end_interface_id IS NOT NULL)'
             ),
             name='single_end_entity_check',
+        ),
+        UniqueConstraint(
+            'window_id',
+            'start_class_id',
+            'start_interface_id',
+            'end_class_id',
+            'end_interface_id',
+            name='uq_relation_unique_pair',
         ),
     )

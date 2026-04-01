@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import CheckConstraint, Field, Relationship, SQLModel
+from sqlmodel import CheckConstraint, Field, Relationship, SQLModel, UniqueConstraint
 
+from app.models import ArgumentPublic
 from app.models.arguments import ArgumentCreate
 from app.models.base import BaseModel
 from app.models.enums import AccessModifier
@@ -25,6 +26,11 @@ class MethodBase(SQLModel):
 class MethodPublic(BaseModel, MethodBase):
     class_id: UUID | None = Field(default=None)
     interface_id: UUID | None = Field(default=None)
+    arguments: list['ArgumentPublic'] = Field(default=[])
+
+    @classmethod
+    def from_model(cls, obj: 'MethodModel'):
+        return cls(**obj.model_dump(), arguments=obj.arguments)
 
 
 class MethodCreate(MethodBase):
@@ -41,7 +47,7 @@ class MethodUpdate(SQLModel):
     arguments: list['ArgumentCreate'] = Field(default=[])
 
 
-class MethodModel(MethodPublic, table=True):
+class MethodModel(BaseModel, MethodBase, table=True):
     __tablename__ = 'method'
 
     class_id: UUID | None = Field(default=None, foreign_key='class.id')
@@ -49,7 +55,10 @@ class MethodModel(MethodPublic, table=True):
 
     class_: 'ClassModel' = Relationship(back_populates='methods')
     interface: 'InterfaceModel' = Relationship(back_populates='methods')
-    arguments: list['ArgumentModel'] = Relationship(back_populates='method')
+    arguments: list['ArgumentModel'] = Relationship(
+        back_populates='method',
+        sa_relationship_kwargs={'lazy': 'selectin'},
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -57,4 +66,6 @@ class MethodModel(MethodPublic, table=True):
             'OR (class_id IS NULL AND interface_id IS NOT NULL)',
             name='method_single_parent_check',
         ),
+        UniqueConstraint('class_id', 'name', name='uq_method_class_name'),
+        UniqueConstraint('interface_id', 'name', name='uq_method_interface_name'),
     )

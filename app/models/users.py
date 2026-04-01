@@ -22,7 +22,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
+    name: str | None = Field(default=None, unique=True, max_length=100)
     email: str | None = Field(default=None, max_length=100)
 
 

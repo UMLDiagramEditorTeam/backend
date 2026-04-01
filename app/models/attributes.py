@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models.base import BaseModel
 from app.models.enums import AccessModifier
@@ -42,3 +42,7 @@ class AttributeModel(AttributePublic, table=True):
     class_id: UUID = Field(foreign_key='class.id')
 
     class_: 'ClassModel' = Relationship(back_populates='attributes')
+
+    __table_args__ = (
+        UniqueConstraint('class_id', 'name', name='uq_attribute_class_name'),
+    )
