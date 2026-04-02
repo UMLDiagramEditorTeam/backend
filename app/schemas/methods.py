@@ -1,6 +1,6 @@
 from typing import Optional
 
-from app.models.enums import AccessModifier
+from app.models import AccessModifier
 from app.schemas.base import CommonListFilters
 
 

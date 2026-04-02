@@ -1,29 +1,37 @@
+from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlmodel import CheckConstraint, Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models.base import BaseModel
-from app.models.enums import RelationType
 
 if TYPE_CHECKING:
-    from app.models.classes import ClassModel
-    from app.models.interfaces import InterfaceModel
-    from app.models.windows import WindowModel
+    from app.models import ClassModel, InterfaceModel, WindowModel
+
+
+class RelationType(str, Enum):
+    RELATION = 'relation'
+    ONE = 'one'
+    MANY = 'many'
+    ONE_AND_ONLY_ONE = 'one and ONLY one'
+    ONE_OR_MANY = 'one or many'
+    ZERO_OR_ONE = 'zero or one'
+    ZERO_OR_MANY = 'zero or many'
 
 
 class RelationBase(SQLModel):
     name: str = Field(max_length=100)
     start_type: RelationType = Field(default=RelationType.RELATION)
     end_type: RelationType = Field(default=RelationType.RELATION)
-    start_class_id: UUID | None
-    start_interface_id: UUID | None
-    end_class_id: UUID | None
-    end_interface_id: UUID | None
+    start_class_id: UUID | None = Field(default=None, foreign_key='class.id')
+    start_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
+    end_class_id: UUID | None = Field(default=None, foreign_key='class.id')
+    end_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
 
 
 class RelationPublic(BaseModel, RelationBase):
-    window_id: UUID
+    window_id: UUID | None = Field(foreign_key='window.id')
 
 
 class RelationCreate(RelationBase):
@@ -33,18 +41,14 @@ class RelationCreate(RelationBase):
 class RelationUpdate(SQLModel):
     start_type: RelationType | None = Field(default=None)
     end_type: RelationType | None = Field(default=None)
-    start_id: UUID | None = Field(default=None)
-    end_id: UUID | None = Field(default=None)
+    start_class_id: UUID | None = Field(default=None)
+    start_interface_id: UUID | None = Field(default=None)
+    end_class_id: UUID | None = Field(default=None)
+    end_interface_id: UUID | None
 
 
 class RelationModel(RelationPublic, table=True):
     __tablename__ = 'relation'
-
-    start_class_id: UUID | None = Field(default=None, foreign_key='class.id')
-    start_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
-    end_class_id: UUID | None = Field(default=None, foreign_key='class.id')
-    end_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
-    window_id: UUID | None = Field(foreign_key='window.id')
 
     start_class: 'ClassModel' = Relationship(
         back_populates='relations_start',

@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
+from app.dependencies.routers import AttributeVerifiedDep, ClassVerifiedDep
 from app.dependencies.services import AttributeServiceDep
 from app.models.attributes import AttributeCreate, AttributeModel, AttributeUpdate
-from app.routers import AttributeVerifiedDep, ClassVerifiedDep
 from app.schemas.attributes import AttributeFilters
 from app.schemas.base import PaginatedResponse
 

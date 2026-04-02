@@ -3,15 +3,11 @@ from uuid import UUID
 
 from sqlmodel import CheckConstraint, Field, Relationship, SQLModel, UniqueConstraint
 
-from app.models import ArgumentPublic
-from app.models.arguments import ArgumentCreate
-from app.models.base import BaseModel
-from app.models.enums import AccessModifier
+from app.models import AccessModifier, BaseModel
+from app.models.arguments import ArgumentCreate, ArgumentPublic
 
 if TYPE_CHECKING:
-    from app.models.arguments import ArgumentModel
-    from app.models.classes import ClassModel
-    from app.models.interfaces import InterfaceModel
+    from app.models import ArgumentModel, ClassModel, InterfaceModel
 
 
 class MethodBase(SQLModel):
@@ -27,10 +23,6 @@ class MethodPublic(BaseModel, MethodBase):
     class_id: UUID | None = Field(default=None)
     interface_id: UUID | None = Field(default=None)
     arguments: list['ArgumentPublic'] = Field(default=[])
-
-    @classmethod
-    def from_model(cls, obj: 'MethodModel'):
-        return cls(**obj.model_dump(), arguments=obj.arguments)
 
 
 class MethodCreate(MethodBase):

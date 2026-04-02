@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Query, status
 from typing_extensions import Annotated
 
+from app.dependencies.routers import ClassVerifiedDep, WindowVerifiedDep
 from app.dependencies.services import ClassServiceDep
 from app.models.classes import ClassCreate, ClassPublic, ClassUpdate
-from app.routers import ClassVerifiedDep, WindowVerifiedDep
 from app.schemas.base import PaginatedResponse
 from app.schemas.classes import ClassFilters
 
@@ -41,11 +41,10 @@ async def create_class(
     class_create: ClassCreate,
     class_service: ClassServiceDep,
 ) -> ClassPublic:
-    class_obj = await class_service.create_class(
+    return await class_service.create_class(
         class_create,
         window_id=window.id,
     )
-    return ClassPublic.from_model(class_obj)
 
 
 @router.get(
@@ -55,7 +54,7 @@ async def create_class(
 async def get_class(
     class_obj: ClassVerifiedDep,
 ) -> ClassPublic:
-    return ClassPublic.from_model(class_obj)
+    return class_obj
 
 
 @router.put(
@@ -67,8 +66,7 @@ async def update_class(
     class_update: ClassUpdate,
     class_service: ClassServiceDep,
 ) -> ClassPublic:
-    class_obj = await class_service.update_class(class_obj.id, class_update)
-    return ClassPublic.from_model(class_obj)
+    return await class_service.update_class(class_obj.id, class_update)
 
 
 @router.delete(

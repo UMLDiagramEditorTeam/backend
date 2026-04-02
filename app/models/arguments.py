@@ -17,7 +17,7 @@ class ArgumentBase(SQLModel):
 
 
 class ArgumentPublic(BaseModel, ArgumentBase):
-    method_id: UUID
+    method_id: UUID = Field(foreign_key='method.id')
 
 
 class ArgumentCreate(ArgumentBase):
@@ -26,8 +26,6 @@ class ArgumentCreate(ArgumentBase):
 
 class ArgumentModel(ArgumentPublic, table=True):
     __tablename__ = 'argument'
-
-    method_id: UUID = Field(foreign_key='method.id')
 
     method: 'MethodModel' = Relationship(back_populates='arguments')
 

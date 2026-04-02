@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
+from app.dependencies.routers import ProjectVerifiedDep, WindowVerifiedDep
 from app.dependencies.services import WindowServiceDep
 from app.models.windows import WindowCreate, WindowPublic, WindowUpdate
-from app.routers.dependencies import ProjectVerifiedDep, WindowVerifiedDep
 from app.schemas.base import PaginatedResponse
 from app.schemas.windows import WindowFilters
 

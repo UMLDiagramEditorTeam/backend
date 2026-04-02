@@ -5,8 +5,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models.classes import ClassModel
-    from app.models.interfaces import InterfaceModel
+    from app.models import ClassModel, InterfaceModel
 
 
 class TileBase(SQLModel):
