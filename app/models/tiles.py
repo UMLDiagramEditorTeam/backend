@@ -23,11 +23,8 @@ class TileCreate(TileBase):
     pass
 
 
-class TileUpdate(SQLModel):
-    x: int | None = Field(default=None, ge=0)
-    y: int | None = Field(default=None, ge=0)
-    width: int | None = Field(default=None, gt=0)
-    height: int | None = Field(default=None, gt=0)
+class TileUpdate(TileBase):
+    pass
 
 
 class TileModel(TilePublic, table=True):

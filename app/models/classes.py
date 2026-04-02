@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models import AccessModifier, BaseModel
-from app.models.tiles import TileCreate, TileModel, TilePublic, TileUpdate
+from app.models.tiles import TileCreate, TileModel, TilePublic
 
 if TYPE_CHECKING:
     from app.models import AttributeModel, MethodModel, RelationModel, WindowModel
@@ -26,10 +26,7 @@ class ClassCreate(ClassBase):
 
 
 class ClassUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
-    access_modifier: AccessModifier | None = Field(default=None)
-    is_abstract: bool | None = Field(default=None)
-    tile: TileUpdate | None = None
+    pass
 
 
 class ClassModel(BaseModel, ClassBase, table=True):

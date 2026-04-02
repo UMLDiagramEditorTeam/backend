@@ -42,7 +42,7 @@ async def create_interface(
     interface_create: InterfaceCreate,
     interface_service: InterfaceServiceDep,
 ) -> InterfacePublic:
-    return await interface_service.create_interface(
+    return await interface_service.create_interface(  # type: ignore[return-value]
         window_id=window.id, interface_create=interface_create
     )
 
@@ -54,7 +54,7 @@ async def create_interface(
 async def get_interface(
     interface: InterfaceVerifiedDep,
 ) -> InterfacePublic:
-    return interface
+    return interface  # type: ignore[return-value]
 
 
 @router.put(
@@ -66,7 +66,7 @@ async def update_interface(
     interface_update: InterfaceUpdate,
     interface_service: InterfaceServiceDep,
 ) -> InterfacePublic:
-    return await interface_service.update_interface(interface.id, interface_update)
+    return await interface_service.update_interface(interface.id, interface_update)  # type: ignore[return-value]
 
 
 @router.delete(

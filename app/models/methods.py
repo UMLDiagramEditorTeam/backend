@@ -29,13 +29,7 @@ class MethodCreate(MethodBase):
     arguments: list['ArgumentCreate'] = Field(default=[])
 
 
-class MethodUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
-    access_modifier: AccessModifier | None = Field(default=None)
-    return_type: str | None = Field(default=None, max_length=100)
-    is_final: bool | None = Field(default=None)
-    is_static: bool | None = Field(default=None)
-    is_abstract: bool | None = Field(default=None)
+class MethodUpdate(MethodBase):
     arguments: list['ArgumentCreate'] = Field(default=[])
 
 

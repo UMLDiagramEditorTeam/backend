@@ -38,13 +38,8 @@ class RelationCreate(RelationBase):
     pass
 
 
-class RelationUpdate(SQLModel):
-    start_type: RelationType | None = Field(default=None)
-    end_type: RelationType | None = Field(default=None)
-    start_class_id: UUID | None = Field(default=None)
-    start_interface_id: UUID | None = Field(default=None)
-    end_class_id: UUID | None = Field(default=None)
-    end_interface_id: UUID | None
+class RelationUpdate(RelationBase):
+    pass
 
 
 class RelationModel(RelationPublic, table=True):

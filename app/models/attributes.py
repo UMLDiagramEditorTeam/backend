@@ -26,13 +26,8 @@ class AttributeCreate(AttributeBase):
     pass
 
 
-class AttributeUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
-    access_modifier: AccessModifier | None = Field(default=None)
-    type: str | None = Field(default=None, max_length=100)
-    is_final: bool | None = Field(default=None)
-    is_static: bool | None = Field(default=None)
-    default_value: str | None = Field(default=None)
+class AttributeUpdate(AttributeBase):
+    pass
 
 
 class AttributeModel(AttributePublic, table=True):

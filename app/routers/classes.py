@@ -41,7 +41,7 @@ async def create_class(
     class_create: ClassCreate,
     class_service: ClassServiceDep,
 ) -> ClassPublic:
-    return await class_service.create_class(
+    return await class_service.create_class(  # type: ignore[return-value]
         class_create,
         window_id=window.id,
     )
@@ -54,7 +54,7 @@ async def create_class(
 async def get_class(
     class_obj: ClassVerifiedDep,
 ) -> ClassPublic:
-    return class_obj
+    return class_obj  # type: ignore[return-value]
 
 
 @router.put(
@@ -66,7 +66,7 @@ async def update_class(
     class_update: ClassUpdate,
     class_service: ClassServiceDep,
 ) -> ClassPublic:
-    return await class_service.update_class(class_obj.id, class_update)
+    return await class_service.update_class(class_obj.id, class_update)  # type: ignore[return-value]
 
 
 @router.delete(
