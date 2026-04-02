@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from enum import Enum
 from uuid import UUID, uuid4
 
 from sqlalchemy.dialects.postgresql import TIMESTAMP
@@ -20,3 +21,10 @@ class BaseModel(SQLModel):
             'onupdate': lambda: datetime.now(timezone.utc),
         },
     )
+
+
+class AccessModifier(str, Enum):
+    PUBLIC = 'public'
+    PRIVATE = 'private'
+    PROTECTED = 'protected'
+    DEFAULT = 'default'

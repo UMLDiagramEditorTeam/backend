@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
+from app.dependencies.routers import RelationVerifiedDep, WindowVerifiedDep
 from app.dependencies.services import RelationServiceDep
 from app.models.relations import RelationCreate, RelationPublic, RelationUpdate
-from app.routers import RelationVerifiedDep, WindowVerifiedDep
 from app.schemas.base import PaginatedResponse
 from app.schemas.relations import RelationFilters
 

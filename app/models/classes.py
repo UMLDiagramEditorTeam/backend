@@ -3,15 +3,11 @@ from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
-from app.models.base import BaseModel
-from app.models.enums import AccessModifier
+from app.models import AccessModifier, BaseModel
 from app.models.tiles import TileCreate, TileModel, TilePublic, TileUpdate
 
 if TYPE_CHECKING:
-    from app.models.attributes import AttributeModel
-    from app.models.methods import MethodModel
-    from app.models.relations import RelationModel
-    from app.models.windows import WindowModel
+    from app.models import AttributeModel, MethodModel, RelationModel, WindowModel
 
 
 class ClassBase(SQLModel):
@@ -23,10 +19,6 @@ class ClassBase(SQLModel):
 class ClassPublic(BaseModel, ClassBase):
     window_id: UUID
     tile: TilePublic
-
-    @classmethod
-    def from_model(cls, obj: 'ClassModel'):
-        return cls(**obj.model_dump(), tile=obj.tile)
 
 
 class ClassCreate(ClassBase):

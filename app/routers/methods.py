@@ -2,14 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.dependencies.services import MethodServiceDep
-from app.models.methods import MethodCreate, MethodPublic, MethodUpdate
-from app.routers import (
+from app.dependencies.routers import (
     ClassMethodVerifiedDep,
     ClassVerifiedDep,
     InterfaceMethodVerifiedDep,
     InterfaceVerifiedDep,
 )
+from app.dependencies.services import MethodServiceDep
+from app.models.methods import MethodCreate, MethodPublic, MethodUpdate
 from app.schemas.base import PaginatedResponse
 from app.schemas.methods import MethodFilters
 
@@ -58,9 +58,7 @@ async def create_class_method(
     method_service: MethodServiceDep,
 ) -> MethodPublic:
 
-    method = await method_service.create_method(method_create, class_id=class_obj.id)
-
-    return MethodPublic.from_model(method)
+    return await method_service.create_method(method_create, class_id=class_obj.id)
 
 
 @class_methods_router.get(
@@ -69,7 +67,7 @@ async def create_class_method(
 )
 async def get_class_method(method: ClassMethodVerifiedDep) -> MethodPublic:
 
-    return MethodPublic.from_model(method)
+    return method
 
 
 @class_methods_router.put(
@@ -82,9 +80,7 @@ async def update_class_method(
     method_service: MethodServiceDep,
 ) -> MethodPublic:
 
-    method = await method_service.update_method(method.id, method_update)
-
-    return MethodPublic.from_model(method)
+    return await method_service.update_method(method.id, method_update)
 
 
 @class_methods_router.delete(
@@ -136,11 +132,7 @@ async def create_interface_method(
     method_service: MethodServiceDep,
 ) -> MethodPublic:
 
-    method = await method_service.create_method(
-        method_create, interface_id=interface.id
-    )
-
-    return MethodPublic.from_model(method)
+    return await method_service.create_method(method_create, interface_id=interface.id)
 
 
 @interface_methods_router.get(
@@ -149,7 +141,7 @@ async def create_interface_method(
 )
 async def get_interface_method(method: InterfaceMethodVerifiedDep) -> MethodPublic:
 
-    return MethodPublic.from_model(method)
+    return method
 
 
 @interface_methods_router.put(
@@ -162,9 +154,7 @@ async def update_interface_method(
     method_service: MethodServiceDep,
 ) -> MethodPublic:
 
-    method = await method_service.update_method(method.id, method_update)
-
-    return MethodPublic.from_model(method)
+    return await method_service.update_method(method.id, method_update)
 
 
 @interface_methods_router.delete(

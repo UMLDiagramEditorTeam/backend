@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.base import BaseModel
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
 
 class UserBase(SQLModel):
     name: str = Field(max_length=100)
-    email: str = Field(max_length=100)
+    email: EmailStr = Field(max_length=100)
 
 
 class UserPublic(BaseModel, UserBase):
@@ -23,7 +24,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(SQLModel):
     name: str | None = Field(default=None, unique=True, max_length=100)
-    email: str | None = Field(default=None, max_length=100)
+    email: EmailStr | None = Field(default=None, max_length=100)
 
 
 class UserModel(UserPublic, table=True):

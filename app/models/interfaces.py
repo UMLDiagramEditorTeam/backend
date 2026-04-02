@@ -3,13 +3,11 @@ from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
-from app.models.base import BaseModel
+from app.models import BaseModel
 from app.models.tiles import TileCreate, TileModel, TilePublic, TileUpdate
 
 if TYPE_CHECKING:
-    from app.models.methods import MethodModel
-    from app.models.relations import RelationModel
-    from app.models.windows import WindowModel
+    from app.models import MethodModel, RelationModel, WindowModel
 
 
 class InterfaceBase(SQLModel):
@@ -19,10 +17,6 @@ class InterfaceBase(SQLModel):
 class InterfacePublic(BaseModel, InterfaceBase):
     window_id: UUID
     tile: TilePublic
-
-    @classmethod
-    def from_model(cls, obj: 'InterfaceModel'):
-        return cls(**obj.model_dump(), tile=obj.tile)
 
 
 class InterfaceCreate(InterfaceBase):

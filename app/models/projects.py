@@ -6,8 +6,7 @@ from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models.users import UserModel
-    from app.models.windows import WindowModel
+    from app.models import UserModel, WindowModel
 
 
 class ProjectBase(SQLModel):
@@ -17,7 +16,7 @@ class ProjectBase(SQLModel):
 
 
 class ProjectPublic(BaseModel, ProjectBase):
-    user_id: UUID
+    user_id: UUID = Field(foreign_key='user.id')
 
 
 class ProjectCreate(ProjectBase):
@@ -32,8 +31,6 @@ class ProjectUpdate(SQLModel):
 
 class ProjectModel(ProjectPublic, table=True):
     __tablename__ = 'project'
-
-    user_id: UUID = Field(foreign_key='user.id')
 
     user: 'UserModel' = Relationship(back_populates='projects')
     windows: list['WindowModel'] = Relationship(back_populates='project')

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from app.models.enums import DiagramType
+from app.models import DiagramType
 from app.schemas.base import CommonListFilters
 
 

@@ -1,16 +1,17 @@
+from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models.base import BaseModel
-from app.models.enums import DiagramType
 
 if TYPE_CHECKING:
-    from app.models import RelationModel
-    from app.models.classes import ClassModel
-    from app.models.interfaces import InterfaceModel
-    from app.models.projects import ProjectModel
+    from app.models import ClassModel, InterfaceModel, ProjectModel, RelationModel
+
+
+class DiagramType(str, Enum):
+    CLASS_DIAGRAM = 'class_diagram'
 
 
 class WindowBase(SQLModel):
@@ -19,7 +20,7 @@ class WindowBase(SQLModel):
 
 
 class WindowPublic(BaseModel, WindowBase):
-    project_id: UUID
+    project_id: UUID = Field(foreign_key='project.id')
 
 
 class WindowCreate(WindowBase):
@@ -33,8 +34,6 @@ class WindowUpdate(SQLModel):
 
 class WindowModel(WindowPublic, table=True):
     __tablename__ = 'window'
-
-    project_id: UUID = Field(foreign_key='project.id')
 
     classes: list['ClassModel'] = Relationship(back_populates='window')
     interfaces: list['InterfaceModel'] = Relationship(back_populates='window')

@@ -1,11 +1,9 @@
-from typing import Sequence, TypeVar
+from typing import Sequence
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import computed_field
 
 from app.models import BaseModel
-
-T = TypeVar('T')
 
 
 class CommonListFilters(PydanticBaseModel):

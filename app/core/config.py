@@ -1,19 +1,28 @@
 from anyio.functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import URL
 
 
 class Settings(BaseSettings):
-    DB_HOST: str = 'localhost'
-    DB_PORT: int = 5432
-    DB_USER: str
-    DB_PASS: str
-    DB_NAME: str
+    db_schema: str = 'postgresql+asyncpg'
+    db_host: str = 'localhost'
+    db_port: int = 5432
+    db_user: str = 'postgres'
+    db_pass: str = 'password'
+    db_name: str = 'db'
+
+    model_config = SettingsConfigDict(env_file='.env')
 
     @property
     def database_url(self) -> str:
-        return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
-
-    model_config = SettingsConfigDict(env_file='.env')
+        return URL.create(
+            drivername=self.db_schema,
+            username=self.db_user,
+            password=self.db_pass,
+            host=self.db_host,
+            port=self.db_port,
+            database=self.db_name,
+        ).render_as_string(hide_password=False)
 
 
 @lru_cache

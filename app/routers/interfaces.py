@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
+from app.dependencies.routers import InterfaceVerifiedDep, WindowVerifiedDep
 from app.dependencies.services import InterfaceServiceDep
 from app.models.interfaces import InterfaceCreate, InterfacePublic, InterfaceUpdate
-from app.routers import InterfaceVerifiedDep, WindowVerifiedDep
 from app.schemas.base import PaginatedResponse
 from app.schemas.interfaces import InterfaceFilters
 
@@ -42,11 +42,9 @@ async def create_interface(
     interface_create: InterfaceCreate,
     interface_service: InterfaceServiceDep,
 ) -> InterfacePublic:
-    interface = await interface_service.create_interface(
+    return await interface_service.create_interface(
         window_id=window.id, interface_create=interface_create
     )
-
-    return InterfacePublic.from_model(interface)
 
 
 @router.get(
@@ -56,7 +54,7 @@ async def create_interface(
 async def get_interface(
     interface: InterfaceVerifiedDep,
 ) -> InterfacePublic:
-    return InterfacePublic.from_model(interface)
+    return interface
 
 
 @router.put(
@@ -68,8 +66,7 @@ async def update_interface(
     interface_update: InterfaceUpdate,
     interface_service: InterfaceServiceDep,
 ) -> InterfacePublic:
-    interface = await interface_service.update_interface(interface.id, interface_update)
-    return InterfacePublic.from_model(interface)
+    return await interface_service.update_interface(interface.id, interface_update)
 
 
 @router.delete(

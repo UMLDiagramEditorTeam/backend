@@ -3,8 +3,7 @@ from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
-from app.models.base import BaseModel
-from app.models.enums import AccessModifier
+from app.models.base import AccessModifier, BaseModel
 
 if TYPE_CHECKING:
     from app.models.classes import ClassModel
@@ -20,7 +19,7 @@ class AttributeBase(SQLModel):
 
 
 class AttributePublic(BaseModel, AttributeBase):
-    class_id: UUID
+    class_id: UUID = Field(foreign_key='class.id')
 
 
 class AttributeCreate(AttributeBase):
@@ -38,8 +37,6 @@ class AttributeUpdate(SQLModel):
 
 class AttributeModel(AttributePublic, table=True):
     __tablename__ = 'attribute'
-
-    class_id: UUID = Field(foreign_key='class.id')
 
     class_: 'ClassModel' = Relationship(back_populates='attributes')
 

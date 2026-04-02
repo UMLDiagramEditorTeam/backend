@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from app.models.enums import RelationType
+from app.models import RelationType
 from app.schemas.base import CommonListFilters
 
 

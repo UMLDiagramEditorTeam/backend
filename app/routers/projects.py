@@ -3,9 +3,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
+from app.dependencies.routers import ProjectVerifiedDep
 from app.dependencies.services import ProjectServiceDep
 from app.models import ProjectCreate, ProjectPublic, ProjectUpdate
-from app.routers import ProjectVerifiedDep
 from app.schemas import PaginatedResponse, ProjectFilters
 
 # ruff: noqa: FAST003 - параметр пути обрабатывается через зависимость
