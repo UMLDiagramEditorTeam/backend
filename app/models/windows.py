@@ -27,9 +27,8 @@ class WindowCreate(WindowBase):
     pass
 
 
-class WindowUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=200)
-    type: DiagramType | None = Field(default=None)
+class WindowUpdate(WindowBase):
+    pass
 
 
 class WindowModel(WindowPublic, table=True):

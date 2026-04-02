@@ -58,7 +58,7 @@ async def create_class_method(
     method_service: MethodServiceDep,
 ) -> MethodPublic:
 
-    return await method_service.create_method(method_create, class_id=class_obj.id)
+    return await method_service.create_method(method_create, class_id=class_obj.id)  # type: ignore[return-value]
 
 
 @class_methods_router.get(
@@ -67,7 +67,7 @@ async def create_class_method(
 )
 async def get_class_method(method: ClassMethodVerifiedDep) -> MethodPublic:
 
-    return method
+    return method  # type: ignore[return-value]
 
 
 @class_methods_router.put(
@@ -80,7 +80,7 @@ async def update_class_method(
     method_service: MethodServiceDep,
 ) -> MethodPublic:
 
-    return await method_service.update_method(method.id, method_update)
+    return await method_service.update_method(method.id, method_update)  # type: ignore[return-value]
 
 
 @class_methods_router.delete(
@@ -132,7 +132,7 @@ async def create_interface_method(
     method_service: MethodServiceDep,
 ) -> MethodPublic:
 
-    return await method_service.create_method(method_create, interface_id=interface.id)
+    return await method_service.create_method(method_create, interface_id=interface.id)  # type: ignore[return-value]
 
 
 @interface_methods_router.get(
@@ -141,7 +141,7 @@ async def create_interface_method(
 )
 async def get_interface_method(method: InterfaceMethodVerifiedDep) -> MethodPublic:
 
-    return method
+    return method  # type: ignore[return-value]
 
 
 @interface_methods_router.put(
@@ -154,7 +154,7 @@ async def update_interface_method(
     method_service: MethodServiceDep,
 ) -> MethodPublic:
 
-    return await method_service.update_method(method.id, method_update)
+    return await method_service.update_method(method.id, method_update)  # type: ignore[return-value]
 
 
 @interface_methods_router.delete(

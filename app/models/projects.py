@@ -23,10 +23,8 @@ class ProjectCreate(ProjectBase):
     pass
 
 
-class ProjectUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=200)
-    description: str | None = Field(default=None)
-    is_imported: bool | None = Field(default=None)
+class ProjectUpdate(ProjectBase):
+    pass
 
 
 class ProjectModel(ProjectPublic, table=True):

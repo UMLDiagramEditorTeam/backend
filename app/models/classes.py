@@ -26,10 +26,7 @@ class ClassCreate(ClassBase):
 
 
 class ClassUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
-    access_modifier: AccessModifier | None = Field(default=None)
-    is_abstract: bool | None = Field(default=None)
-    tile: TileUpdate | None = None
+    tile: TileUpdate
 
 
 class ClassModel(BaseModel, ClassBase, table=True):

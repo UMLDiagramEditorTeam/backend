@@ -23,9 +23,8 @@ class InterfaceCreate(InterfaceBase):
     tile: TileCreate | None = None
 
 
-class InterfaceUpdate(SQLModel):
-    name: str | None = Field(default=None, max_length=100)
-    tile: TileUpdate | None = None
+class InterfaceUpdate(InterfaceBase):
+    tile: TileUpdate
 
 
 class InterfaceModel(BaseModel, InterfaceBase, table=True):
