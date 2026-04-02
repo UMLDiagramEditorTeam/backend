@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
 from app.models import BaseModel
-from app.models.tiles import TileCreate, TileModel, TilePublic
+from app.models.tiles import TileCreate, TileModel, TilePublic, TileUpdate
 
 if TYPE_CHECKING:
     from app.models import MethodModel, RelationModel, WindowModel
@@ -24,7 +24,7 @@ class InterfaceCreate(InterfaceBase):
 
 
 class InterfaceUpdate(InterfaceBase):
-    pass
+    tile: TileUpdate
 
 
 class InterfaceModel(BaseModel, InterfaceBase, table=True):
