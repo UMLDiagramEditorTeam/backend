@@ -55,8 +55,7 @@ class MethodService:
         class_id: Optional[UUID] = None,
         interface_id: Optional[UUID] = None,
     ) -> Sequence[MethodPublic]:
-        methods = await self.get_methods(filters, class_id, interface_id, ['arguments'])
-        return list(map(MethodPublic.from_model, methods))
+        return await self.get_methods(filters, class_id, interface_id, ['arguments'])  # type: ignore[return-value]
 
     async def get_method(self, method_id: UUID) -> Optional[MethodModel]:
         return await self.__method_repository.get(method_id)

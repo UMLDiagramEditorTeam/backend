@@ -3,8 +3,9 @@ from uuid import UUID
 
 from sqlmodel import CheckConstraint, Field, Relationship, SQLModel, UniqueConstraint
 
-from app.models import AccessModifier, BaseModel
 from app.models.arguments import ArgumentCreate, ArgumentPublic
+from app.models.base import BaseModel
+from app.models.classes import AccessModifier
 
 if TYPE_CHECKING:
     from app.models import ArgumentModel, ClassModel, InterfaceModel
