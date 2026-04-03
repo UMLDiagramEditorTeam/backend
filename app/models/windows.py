@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -10,13 +9,8 @@ if TYPE_CHECKING:
     from app.models import ClassModel, InterfaceModel, ProjectModel, RelationModel
 
 
-class DiagramType(str, Enum):
-    CLASS_DIAGRAM = 'class_diagram'
-
-
 class WindowBase(SQLModel):
     name: str = Field(max_length=200)
-    type: DiagramType = Field(default=DiagramType.CLASS_DIAGRAM)
 
 
 class WindowPublic(BaseModel, WindowBase):

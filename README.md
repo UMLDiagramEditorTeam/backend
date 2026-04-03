@@ -25,28 +25,57 @@
 | DB_PASS | DB password | string | password  |
 | DB_NAME | DB name     | string | postgres  |
 
-## Как запустить проект
+## До запуска проекта
 
+Клонирование репозитория
 Для запуска проекта требуется менеджер зависимостей [uv](https://docs.astral.sh/uv/)
 
-Нужно клонировать репозиторий, далее:
-
-```
+### Установка зависимостей
+```bash
 uv sync
+```
 
+### Применение миграций
+```bash
+uv run alembic upgrade head
+```
+
+## Запуск проекта
+```bash
 uv run fastapi dev
 ```
 
-## Миграции
+## Для разработчиков
 
-Проект использует **Alembic** для управления миграциями.
+### Установка зависимостей для разработчиков
+```bash
+uv sync --dev
+```
 
-- **Создать миграцию:** `uv run alembic revision --autogenerate -m "описание"`
-- **Применить:** `uv run alembic upgrade head`
-- **Откатить:** `uv run alembic downgrade -1`
+### Миграции
+
+#### Создать
+
+```bash
+uv run alembic revision --autogenerate -m "описание"
+```
+
+#### Применить
+```bash
+uv run alembic upgrade head
+```
+
+#### Откатить
+
+```bash
+uv run alembic downgrade -1
+```
 
 Перед выполнением команд убедитесь, что заполнен `.env` и запущен PostgreSQL.
 
 ## pre-commit
 
-Установка pre-commit: `uv run pre-commit install`
+Установка pre-commit
+```bash
+uv run pre-commit install
+```

@@ -34,8 +34,7 @@ class ClassService:
     async def get_classes_public(
         self, window_id: UUID, filters: ClassFilters
     ) -> Sequence[ClassPublic]:
-        classes = await self.get_classes(window_id, filters, ['tile'])
-        return list(map(ClassPublic.from_model, classes))
+        return await self.get_classes(window_id, filters, ['tile'])  # type: ignore[return-value]
 
     async def count_classes(self, window_id: UUID, filters: ClassFilters) -> int:
         return await self.__class_repository.count_all(

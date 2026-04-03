@@ -42,8 +42,7 @@ class InterfaceService:
     async def get_interfaces_public(
         self, window_id: UUID, filters: InterfaceFilters
     ) -> Sequence[InterfacePublic]:
-        interfaces = await self.get_interfaces(window_id, filters, ['tile'])
-        return list(map(InterfacePublic.from_model, interfaces))
+        return await self.get_interfaces(window_id, filters, ['tile'])  # type: ignore[return-value]
 
     async def count_interfaces(self, window_id: UUID, filters: InterfaceFilters) -> int:
         return await self.__interface_repository.count_all(

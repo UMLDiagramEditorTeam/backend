@@ -1,13 +1,21 @@
+from enum import Enum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 
-from app.models import AccessModifier, BaseModel
+from app.models import BaseModel
 from app.models.tiles import TileCreate, TileModel, TilePublic, TileUpdate
 
 if TYPE_CHECKING:
     from app.models import AttributeModel, MethodModel, RelationModel, WindowModel
+
+
+class AccessModifier(str, Enum):
+    PUBLIC = 'public'
+    PRIVATE = 'private'
+    PROTECTED = 'protected'
+    DEFAULT = 'default'
 
 
 class ClassBase(SQLModel):
