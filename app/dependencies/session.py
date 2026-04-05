@@ -1,0 +1,8 @@
+from typing import Annotated
+
+from fastapi import Depends
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.db.database import get_session
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
