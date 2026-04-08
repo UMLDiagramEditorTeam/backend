@@ -1,0 +1,3356 @@
+openapi: 3.0.0
+info:
+  title: API визуального конструктора UML-диаграмм
+  description: |
+    API для визуального конструктора UML-диаграмм с генерацией кода.
+    Позволяет управлять проектами, элементами диаграмм и автоматически синхронизировать визуальные модели с программным кодом.
+  version: 1.1.1
+servers:
+- url: https://virtserver.swaggerhub.com/bbb-7fb/spec/1.1.1
+  description: SwaggerHub API Auto Mocking
+security:
+- bearerAuth: []
+tags:
+- name: Auth
+  description: Аутентификация и управление сессиями пользователей
+- name: Users
+  description: Управление пользователями системы
+- name: Projects
+  description: Управление проектами пользователей
+- name: Windows
+  description: Управление окнами в рамках проекта
+- name: Classes
+  description: Управление классами на холсте
+- name: Interfaces
+  description: Управление интерфейсами на холсте
+- name: Attributes
+  description: Управление атрибутами классов и интерфейсов
+- name: Methods
+  description: Управление методами классов и интерфейсов
+- name: Relations
+  description: Управление связями между элементами
+paths:
+  /auth/register:
+    post:
+      tags:
+      - Auth
+      summary: Регистрация нового пользователя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "201":
+          description: Пользователь успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/login:
+    post:
+      tags:
+      - Auth
+      summary: Вход в систему
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/logout:
+    post:
+      tags:
+      - Auth
+      summary: Выход из системы
+      responses:
+        "200":
+          description: Успешный выход из системы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /auth/me:
+    get:
+      tags:
+      - Auth
+      summary: Информация о текущем пользователе
+      responses:
+        "200":
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /auth/password-change:
+    post:
+      tags:
+        - Auth
+      summary: Смена пароля пользователя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: Пароль успешно изменен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangePasswordResponse"
+        "400":
+          description: Неверный текущий пароль или новый пароль совпадает со старым
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+        - bearerAuth: [ ]
+  /users:
+    get:
+      tags:
+      - Users
+      summary: Получить список пользователей (только для админов)
+      parameters:
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      responses:
+        "200":
+          description: Успешный возврат списка пользователей
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Users
+      summary: Создать нового пользователя (только для админов)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+        required: true
+      responses:
+        "201":
+          description: Пользователь успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /users/{id}:
+    get:
+      tags:
+      - Users
+      summary: Получить пользователя по ID
+      parameters:
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Users
+      summary: Обновить данные пользователя
+      parameters:
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+        required: true
+      responses:
+        "200":
+          description: Пользователь обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Users
+      summary: Удалить пользователя
+      parameters:
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Пользователь успешно удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /projects:
+    get:
+      tags:
+      - Projects
+      summary: Получить список проектов текущего пользователя
+      parameters:
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      - name: name
+        in: query
+        description: Фильтр по названию проекта (частичное совпадение)
+        required: false
+        schema:
+          type: string
+      - name: is_imported
+        in: query
+        description: Фильтр по флагу импорта
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: Успешный возврат списка проектов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_1"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Projects
+      summary: Создать новый проект
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreate"
+        required: true
+      responses:
+        "201":
+          description: Проект успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /projects/{id}:
+    get:
+      tags:
+      - Projects
+      summary: Получить проект по ID
+      parameters:
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация о проекте
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Projects
+      summary: Обновить данные проекта
+      parameters:
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+        required: true
+      responses:
+        "200":
+          description: Проект обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Projects
+      summary: Удалить проект
+      parameters:
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Проект успешно удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /projects/{projectId}/windows:
+    get:
+      tags:
+      - Windows
+      summary: Получить все окна проекта
+      parameters:
+      - name: projectId
+        in: path
+        description: ID проекта
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      - name: type
+        in: query
+        description: Фильтр по типу окна
+        required: false
+        schema:
+          type: string
+          enum:
+          - class_diagram
+          - sequence_diagram
+      responses:
+        "200":
+          description: Список окон проекта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_2"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Windows
+      summary: Создать новое окно в проекте
+      parameters:
+      - name: projectId
+        in: path
+        description: ID проекта
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WindowCreate"
+        required: true
+      responses:
+        "201":
+          description: Окно создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Window"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /projects/{projectId}/windows/{id}:
+    get:
+      tags:
+      - Windows
+      summary: Получить окно по ID
+      parameters:
+      - name: projectId
+        in: path
+        description: ID проекта
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация об окне
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Window"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Windows
+      summary: Обновить данные окна
+      parameters:
+      - name: projectId
+        in: path
+        description: ID проекта
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WindowUpdate"
+        required: true
+      responses:
+        "200":
+          description: Окно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Window"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Windows
+      summary: Удалить окно
+      parameters:
+      - name: projectId
+        in: path
+        description: ID проекта
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Окно успешно удалено
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /windows/{windowId}/classes:
+    get:
+      tags:
+      - Classes
+      summary: Получить все классы в окне
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      - name: name
+        in: query
+        description: Фильтр по имени класса (частичное совпадение)
+        required: false
+        schema:
+          type: string
+      - name: is_abstract
+        in: query
+        description: Фильтр по абстрактности класса
+        required: false
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: Список классов в окне
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_3"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Classes
+      summary: Создать новый класс в окне
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassCreate"
+        required: true
+      responses:
+        "201":
+          description: Класс создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Class"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /windows/{windowId}/classes/{id}:
+    get:
+      tags:
+      - Classes
+      summary: Получить класс по ID
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация о классе
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Class"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Classes
+      summary: Обновить данные класса
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassUpdate"
+        required: true
+      responses:
+        "200":
+          description: Класс обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Class"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Classes
+      summary: Удалить класс
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Класс успешно удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /windows/{windowId}/interfaces:
+    get:
+      tags:
+      - Interfaces
+      summary: Получить все интерфейсы в окне
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      - name: name
+        in: query
+        description: Фильтр по имени интерфейса (частичное совпадение)
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Список интерфейсов в окне
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_4"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Interfaces
+      summary: Создать новый интерфейс в окне
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterfaceCreate"
+        required: true
+      responses:
+        "201":
+          description: Интерфейс создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interface"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /windows/{windowId}/interfaces/{id}:
+    get:
+      tags:
+      - Interfaces
+      summary: Получить интерфейс по ID
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация об интерфейсе
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interface"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Interfaces
+      summary: Обновить данные интерфейса
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterfaceUpdate"
+        required: true
+      responses:
+        "200":
+          description: Интерфейс обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interface"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Interfaces
+      summary: Удалить интерфейс
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Интерфейс успешно удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /classes/{classId}/attributes:
+    get:
+      tags:
+      - Attributes
+      summary: Получить все атрибуты класса
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      responses:
+        "200":
+          description: Список атрибутов класса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_5"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Attributes
+      summary: Создать новый атрибут для класса
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeCreate"
+        required: true
+      responses:
+        "201":
+          description: Атрибут создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attribute"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /classes/{classId}/attributes/{attributeId}:
+    get:
+      tags:
+      - Attributes
+      summary: Получить атрибут класса по ID
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attributeId
+        in: path
+        description: ID атрибута
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация об атрибуте
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attribute"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Attributes
+      summary: Обновить атрибут класса
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attributeId
+        in: path
+        description: ID атрибута
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeUpdate"
+        required: true
+      responses:
+        "200":
+          description: Атрибут обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attribute"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Attributes
+      summary: Удалить атрибут класса
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attributeId
+        in: path
+        description: ID атрибута
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Атрибут успешно удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /interfaces/{interfaceId}/attributes:
+    get:
+      tags:
+      - Attributes
+      summary: Получить все атрибуты интерфейса
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      responses:
+        "200":
+          description: Список атрибутов интерфейса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_5"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Attributes
+      summary: Создать новый атрибут для интерфейса
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeCreate"
+        required: true
+      responses:
+        "201":
+          description: Атрибут создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attribute"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /interfaces/{interfaceId}/attributes/{attributeId}:
+    get:
+      tags:
+      - Attributes
+      summary: Получить атрибут интерфейса по ID
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attributeId
+        in: path
+        description: ID атрибута
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация об атрибуте
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attribute"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Attributes
+      summary: Обновить атрибут интерфейса
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attributeId
+        in: path
+        description: ID атрибута
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeUpdate"
+        required: true
+      responses:
+        "200":
+          description: Атрибут обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attribute"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Attributes
+      summary: Удалить атрибут интерфейса
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: attributeId
+        in: path
+        description: ID атрибута
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Атрибут успешно удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /classes/{classId}/methods:
+    get:
+      tags:
+      - Methods
+      summary: Получить все методы класса
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      responses:
+        "200":
+          description: Список методов класса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_6"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Methods
+      summary: Создать новый метод для класса
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MethodCreate"
+        required: true
+      responses:
+        "201":
+          description: Метод создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Method"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /classes/{classId}/methods/{methodId}:
+    get:
+      tags:
+      - Methods
+      summary: Получить метод класса по ID
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: methodId
+        in: path
+        description: ID метода
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация о методе
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Method"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Methods
+      summary: Обновить метод класса
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: methodId
+        in: path
+        description: ID метода
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MethodUpdate"
+        required: true
+      responses:
+        "200":
+          description: Метод обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Method"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Methods
+      summary: Удалить метод класса
+      parameters:
+      - name: classId
+        in: path
+        description: ID класса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: methodId
+        in: path
+        description: ID метода
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Метод успешно удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /interfaces/{interfaceId}/methods:
+    get:
+      tags:
+      - Methods
+      summary: Получить все методы интерфейса
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      responses:
+        "200":
+          description: Список методов интерфейса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_6"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Methods
+      summary: Создать новый метод для интерфейса
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MethodCreate"
+        required: true
+      responses:
+        "201":
+          description: Метод создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Method"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /interfaces/{interfaceId}/methods/{methodId}:
+    get:
+      tags:
+      - Methods
+      summary: Получить метод интерфейса по ID
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: methodId
+        in: path
+        description: ID метода
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация о методе
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Method"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Methods
+      summary: Обновить метод интерфейса
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: methodId
+        in: path
+        description: ID метода
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MethodUpdate"
+        required: true
+      responses:
+        "200":
+          description: Метод обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Method"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Methods
+      summary: Удалить метод интерфейса
+      parameters:
+      - name: interfaceId
+        in: path
+        description: ID интерфейса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: methodId
+        in: path
+        description: ID метода
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Метод успешно удален
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /windows/{windowId}/relations:
+    get:
+      tags:
+      - Relations
+      summary: Получить все связи в окне
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        description: Номер страницы (с 1)
+        required: false
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество элементов на странице
+        required: false
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 20
+      - name: type
+        in: query
+        description: Фильтр по типу связи
+        required: false
+        schema:
+          type: string
+          enum:
+          - realization
+          - relation
+      - name: begin_id
+        in: query
+        description: Фильтр по исходному элементу
+        required: false
+        schema:
+          type: string
+      - name: end_id
+        in: query
+        description: Фильтр по целевому элементу
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Список связей в окне
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200_7"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Relations
+      summary: Создать новую связь в окне
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationCreate"
+        required: true
+      responses:
+        "201":
+          description: Связь создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Relation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /windows/{windowId}/relations/{id}:
+    get:
+      tags:
+      - Relations
+      summary: Получить связь по ID
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Информация о связи
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Relation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Relations
+      summary: Обновить данные связи
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationUpdate"
+        required: true
+      responses:
+        "200":
+          description: Связь обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Relation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Relations
+      summary: Удалить связь
+      parameters:
+      - name: windowId
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: id
+        in: path
+        description: Уникальный идентификатор ресурса
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Связь успешно удалена
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    ValidationErrorItem:
+      required:
+      - field
+      - message
+      type: object
+      properties:
+        field:
+          type: string
+          description: Путь к полю с ошибкой
+          example: body.email
+        message:
+          type: string
+          description: Описание ошибки
+          example: Must be a valid email address
+        code:
+          type: string
+          description: Код ошибки для программной обработки
+          example: INVALID_FORMAT
+    ErrorResponse:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorResponse_error"
+    UnauthorizedError:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/UnauthorizedError_error"
+    ForbiddenError:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/ForbiddenError_error"
+    NotFoundError:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/NotFoundError_error"
+    ConflictError:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/ConflictError_error"
+    InternalServerError:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/InternalServerError_error"
+    LoginRequest:
+      required:
+      - email
+      - password
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: securePassword123
+    LoginResponse:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+          example: Успешный вход в систему
+    RegisterRequest:
+      required:
+      - email
+      - name
+      - password
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+          example: Jane Doe
+        email:
+          maxLength: 100
+          type: string
+          format: email
+          example: jane@example.com
+        password:
+          maxLength: 50
+          minLength: 6
+          type: string
+          format: password
+          example: securePassword123
+    RegisterResponse:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+          example: Пользователь успешно зарегистрирован
+    LogoutResponse:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+          example: Успешный выход из системы
+        status:
+          type: string
+          example: "success"
+    User:
+      required:
+      - created_at
+      - email
+      - id
+      - name
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          maxLength: 100
+          type: string
+          example: John Doe
+        email:
+          maxLength: 100
+          type: string
+          format: email
+          example: user@example.com
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UserCreate:
+      required:
+      - email
+      - name
+      - password
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+          example: Jane Doe
+        email:
+          maxLength: 100
+          type: string
+          format: email
+          example: jane@example.com
+        password:
+          maxLength: 50
+          minLength: 6
+          type: string
+          format: password
+    UserUpdate:
+      required:
+        - email
+        - name
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+        email:
+          maxLength: 100
+          type: string
+          format: email
+    Project:
+      required:
+      - created_at
+      - id
+      - is_imported
+      - name
+      - user_id
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          maxLength: 200
+          type: string
+          example: E-commerce System
+        description:
+          type: string
+          nullable: true
+          example: Online store UML diagram
+        is_imported:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user_id:
+          type: string
+          format: uuid
+    ProjectCreate:
+      required:
+      - name
+      - is_imported
+      type: object
+      properties:
+        name:
+          maxLength: 200
+          type: string
+          example: New Project
+        description:
+          type: string
+          nullable: true
+        is_imported:
+          type: boolean
+          default: false
+    ProjectUpdate:
+      required:
+        - name
+        - is_imported
+      type: object
+      properties:
+        name:
+          maxLength: 200
+          type: string
+        description:
+          type: string
+          nullable: true
+        is_imported:
+          type: boolean
+    Window:
+      required:
+      - created_at
+      - id
+      - name
+      - project_id
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          maxLength: 200
+          type: string
+          example: Main Class Diagram
+        type:
+          type: string
+          example: class_diagram
+          enum:
+          - class_diagram
+          - sequence_diagram
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        project_id:
+          type: string
+          format: uuid
+    WindowCreate:
+      required:
+      - name
+      - type
+      type: object
+      properties:
+        name:
+          maxLength: 200
+          type: string
+          example: New Window
+        type:
+          type: string
+          enum:
+          - class_diagram
+          - sequence_diagram
+          default: class_diagram
+    WindowUpdate:
+      required:
+        - name
+        - type
+      type: object
+      properties:
+        name:
+          maxLength: 200
+          type: string
+        type:
+          type: string
+          enum:
+          - class_diagram
+          - sequence_diagram
+    Tile:
+      required:
+      - id
+      - window_id
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        is_correct:
+          type: boolean
+          default: false
+        position_x:
+          type: integer
+          example: 100
+        position_y:
+          type: integer
+          example: 150
+        width:
+          type: integer
+          default: 200
+        height:
+          type: integer
+          default: 150
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    TileCreate:
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        is_correct:
+          type: boolean
+          default: false
+        position_x:
+          type: integer
+          example: 100
+        position_y:
+          type: integer
+          example: 150
+        width:
+          type: integer
+          default: 200
+        height:
+          type: integer
+          default: 150
+    TileUpdate:
+      type: object
+      properties:
+        is_correct:
+          type: boolean
+          default: false
+        position_x:
+          type: integer
+        position_y:
+          type: integer
+        width:
+          type: integer
+        height:
+          type: integer
+    Class:
+      required:
+      - id
+      - name
+      - window_id
+      - tile_id
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          maxLength: 100
+          type: string
+          example: UserService
+        access_modifier:
+          type: string
+          nullable: true
+          example: public
+          enum:
+          - public
+          - private
+          - protected
+        is_abstract:
+          type: boolean
+          default: false
+        window_id:
+          type: string
+          format: uuid
+        tile_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ClassCreate:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+          example: NewClass
+        access_modifier:
+          type: string
+          nullable: true
+          enum:
+          - public
+          - private
+          - protected
+          default: public
+        is_abstract:
+          type: boolean
+          default: false
+    ClassUpdate:
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+        access_modifier:
+          type: string
+          nullable: true
+          enum:
+          - public
+          - private
+          - protected
+        is_abstract:
+          type: boolean
+    Interface:
+      required:
+      - id
+      - name
+      - window_id
+      - tile_id
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          maxLength: 100
+          type: string
+          example: UserRepository
+        tile_id:
+          type: string
+          format: uuid
+        window_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    InterfaceCreate:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+          example: NewInterface
+    InterfaceUpdate:
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+    Attribute:
+      required:
+      - id
+      - name
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          maxLength: 100
+          type: string
+          example: userName
+        access_modifier:
+          type: string
+          nullable: true
+          enum:
+          - public
+          - private
+          - protected
+          default: public
+        type:
+          maxLength: 100
+          type: string
+          description: Тип данных
+          example: string
+        is_final:
+          type: boolean
+          description: Константа (final/const)
+          default: false
+        is_static:
+          type: boolean
+          default: false
+        default_value:
+          type: string
+          nullable: true
+          example: '"guest"'
+        class_id:
+          type: string
+          format: uuid
+          nullable: true
+        interface_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    AttributeCreate:
+      required:
+      - name
+      - type
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+          example: count
+        access_modifier:
+          type: string
+          nullable: true
+          enum:
+          - public
+          - private
+          - protected
+          default: public
+        type:
+          maxLength: 100
+          type: string
+          example: int
+        is_final:
+          type: boolean
+          default: false
+        is_static:
+          type: boolean
+          default: false
+        default_value:
+          type: string
+          nullable: true
+    AttributeUpdate:
+      required:
+        - name
+        - type
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+        access_modifier:
+          type: string
+          nullable: true
+          enum:
+          - public
+          - private
+          - protected
+        type:
+          maxLength: 100
+          type: string
+        is_final:
+          type: boolean
+        is_static:
+          type: boolean
+        default_value:
+          type: string
+          nullable: true
+    MethodArgument:
+      required:
+      - name
+      - type
+      type: object
+      properties:
+        name:
+          type: string
+          example: userId
+        type:
+          type: string
+          example: int
+        default_value:
+          type: string
+          nullable: true
+          example: "0"
+    Method:
+      required:
+      - id
+      - name
+      - return_type
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          maxLength: 100
+          type: string
+          example: calculateTotal
+        access_modifier:
+          type: string
+          nullable: true
+          enum:
+          - public
+          - private
+          - protected
+          default: public
+        return_type:
+          maxLength: 100
+          type: string
+          example: double
+        is_final:
+          type: boolean
+          default: false
+        is_static:
+          type: boolean
+          default: false
+        is_abstract:
+          type: boolean
+          default: false
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/MethodArgument"
+        class_id:
+          type: string
+          format: uuid
+          nullable: true
+        interface_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    MethodCreate:
+      required:
+      - name
+      - return_type
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+          example: processData
+        access_modifier:
+          type: string
+          nullable: true
+          enum:
+          - public
+          - private
+          - protected
+          default: public
+        return_type:
+          maxLength: 100
+          type: string
+          example: void
+        is_final:
+          type: boolean
+          default: false
+        is_static:
+          type: boolean
+          default: false
+        is_abstract:
+          type: boolean
+          default: false
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/MethodArgument"
+    MethodUpdate:
+      required:
+        - name
+        - return_type
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          type: string
+        access_modifier:
+          type: string
+          nullable: true
+          enum:
+          - public
+          - private
+          - protected
+        return_type:
+          maxLength: 100
+          type: string
+        is_final:
+          type: boolean
+        is_static:
+          type: boolean
+        is_abstract:
+          type: boolean
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/MethodArgument"
+    Relation:
+      required:
+      - id
+      - begin_type
+      - end_type
+      - type
+      - window_id
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - relation
+          - realization
+        begin_class_id:
+          type: string
+          format: uuid
+        end_class_id:
+          type: string
+          format: uuid
+        begin_interface_id:
+          type: string
+          format: uuid
+        end_interface_id:
+          type: string
+          format: uuid
+        begin_type:
+          type: string
+          enum:
+            - one
+            - many
+            - one_only_one
+            - one_or_many
+            - zero_or_one
+            - zero_or_many
+          nullable: true
+        end_type:
+          type: string
+          enum:
+            - one
+            - many
+            - one_only_one
+            - one_or_many
+            - zero_or_one
+            - zero_or_many
+          nullable: true
+        window_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    RelationCreate:
+      required:
+      - begin_type
+      - end_type
+      - type
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - relation
+          - realization
+        begin_class_id:
+          type: string
+          format: uuid
+        end_class_id:
+          type: string
+          format: uuid
+        begin_interface_id:
+          type: string
+          format: uuid
+        end_interface_id:
+          type: string
+          format: uuid
+        begin_type:
+          type: string
+          enum:
+            - one
+            - many
+            - one_only_one
+            - one_or_many
+            - zero_or_one
+            - zero_or_many
+          nullable: true
+        end_type:
+          type: string
+          enum:
+            - one
+            - many
+            - one_only_one
+            - one_or_many
+            - zero_or_one
+            - zero_or_many
+          nullable: true
+    RelationUpdate:
+      required:
+        - begin_type
+        - end_type
+        - type
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - relation
+          - realization
+        begin_type:
+          type: string
+          enum:
+            - one
+            - many
+            - one_only_one
+            - one_or_many
+            - zero_or_one
+            - zero_or_many
+          nullable: true
+        end_type:
+          type: string
+          enum:
+            - one
+            - many
+            - one_only_one
+            - one_or_many
+            - zero_or_one
+            - zero_or_many
+          nullable: true
+    ChangePasswordRequest:
+      type: object
+      required:
+        - current_password
+        - new_password
+        - confirm_password
+      properties:
+        current_password:
+          type: string
+          format: password
+          description: Текущий пароль пользователя
+          example: "oldPassword123"
+          minLength: 8
+        new_password:
+          type: string
+          format: password
+          description: Новый пароль
+          example: "newPassword456"
+          minLength: 8
+        confirm_password:
+          type: string
+          format: password
+          description: Подтверждение нового пароля
+          example: "newPassword456"
+          minLength: 8
+    ChangePasswordResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Сообщение об успешной смене пароля
+          example: "Password changed successfully"
+        status:
+          type: string
+          example: "success"
+    PaginatedResponse:
+      required:
+      - data
+      - limit
+      - page
+      - total
+      - total_pages
+      type: object
+      properties:
+        data:
+          type: array
+          description: Массив данных
+          items:
+            type: object
+            description: "Базовый тип элемента, конкретная схема определяется в каждом ответе"
+        total:
+          type: integer
+          description: Общее количество записей
+          example: 100
+        page:
+          type: integer
+          description: Текущая страница
+          example: 1
+        limit:
+          type: integer
+          description: Количество элементов на странице
+          example: 20
+        total_pages:
+          type: integer
+          description: Общее количество страниц
+          example: 5
+    inline_response_200:
+      allOf:
+      - $ref: "#/components/schemas/PaginatedResponse"
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/components/schemas/User"
+    inline_response_200_1:
+      allOf:
+      - $ref: "#/components/schemas/PaginatedResponse"
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/components/schemas/Project"
+    inline_response_200_2:
+      allOf:
+      - $ref: "#/components/schemas/PaginatedResponse"
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/components/schemas/Window"
+    inline_response_200_3:
+      allOf:
+      - $ref: "#/components/schemas/PaginatedResponse"
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/components/schemas/Class"
+    inline_response_200_4:
+      allOf:
+      - $ref: "#/components/schemas/PaginatedResponse"
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/components/schemas/Interface"
+    inline_response_200_5:
+      allOf:
+      - $ref: "#/components/schemas/PaginatedResponse"
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/components/schemas/Attribute"
+    inline_response_200_6:
+      allOf:
+      - $ref: "#/components/schemas/PaginatedResponse"
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/components/schemas/Method"
+    inline_response_200_7:
+      allOf:
+      - $ref: "#/components/schemas/PaginatedResponse"
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: "#/components/schemas/Relation"
+    ErrorResponse_error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Ошибка валидации запроса
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationErrorItem"
+    UnauthorizedError_error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+          example: UNAUTHORIZED
+        message:
+          type: string
+          example: Требуется аутентификация
+    ForbiddenError_error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+          example: FORBIDDEN
+        message:
+          type: string
+          example: Недостаточно прав для доступа к ресурсу
+    NotFoundError_error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+          example: NOT_FOUND
+        message:
+          type: string
+          example: Ресурс не найден
+    ConflictError_error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+          example: CONFLICT
+        message:
+          type: string
+          example: Ресурс с таким именем уже существует
+    InternalServerError_error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+          example: INTERNAL_SERVER_ERROR
+        message:
+          type: string
+          example: Внутренняя ошибка сервера
+  responses:
+    Unauthorized:
+      description: Отсутствует или невалидный токен аутентификации
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UnauthorizedError"
+    Forbidden:
+      description: Доступ запрещен (попытка доступа к чужому ресурсу)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ForbiddenError"
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NotFoundError"
+    Conflict:
+      description: Конфликт при создании/обновлении ресурса
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConflictError"
+    ValidationError:
+      description: Ошибка валидации запроса
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/InternalServerError"
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Номер страницы (с 1)
+      required: false
+      schema:
+        minimum: 1
+        type: integer
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      description: Количество элементов на странице
+      required: false
+      schema:
+        maximum: 100
+        minimum: 1
+        type: integer
+        default: 20
+    IdParam:
+      name: id
+      in: path
+      description: Уникальный идентификатор ресурса
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProjectIdParam:
+      name: projectId
+      in: path
+      description: ID проекта
+      required: true
+      schema:
+        type: string
+        format: uuid
+    WindowIdParam:
+      name: windowId
+      in: path
+      description: ID окна
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ClassIdParam:
+      name: classId
+      in: path
+      description: ID класса
+      required: true
+      schema:
+        type: string
+        format: uuid
+    InterfaceIdParam:
+      name: interfaceId
+      in: path
+      description: ID интерфейса
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AttributeIdParam:
+      name: attributeId
+      in: path
+      description: ID атрибута
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MethodIdParam:
+      name: methodId
+      in: path
+      description: ID метода
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProjectNameFilter:
+      name: name
+      in: query
+      description: Фильтр по названию проекта (частичное совпадение)
+      required: false
+      schema:
+        type: string
+    ProjectImportedFilter:
+      name: is_imported
+      in: query
+      description: Фильтр по флагу импорта
+      required: false
+      schema:
+        type: boolean
+    WindowTypeFilter:
+      name: type
+      in: query
+      description: Фильтр по типу окна
+      required: false
+      schema:
+        type: string
+        enum:
+        - class_diagram
+        - sequence_diagram
+    ClassNameFilter:
+      name: name
+      in: query
+      description: Фильтр по имени класса (частичное совпадение)
+      required: false
+      schema:
+        type: string
+    ClassAbstractFilter:
+      name: is_abstract
+      in: query
+      description: Фильтр по абстрактности класса
+      required: false
+      schema:
+        type: boolean
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: JWT токен для аутентификации
+      scheme: bearer
+      bearerFormat: JWT
