@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 
+from app.dependencies.auth import CurrentUserDep
 from app.dependencies.services import (
     AttributeServiceDep,
     ClassServiceDep,
@@ -21,13 +22,21 @@ from app.models.windows import WindowModel
 async def get_verified_project(
     project_id: UUID,
     project_service: ProjectServiceDep,
-    user_id: UUID,  # TODO: get from JWT
+    current_user: CurrentUserDep,
 ) -> ProjectModel:
     project = await project_service.get_project(project_id)
     if project is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if not await project_service.check_ownership(project_id, user_id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+    if project.user_id != current_user.id:
+        user_roles = (
+            {role.name for role in current_user.roles}
+            if hasattr(current_user, 'roles')
+            else set()
+        )
+        if 'admin' not in user_roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
     return project
 
 
