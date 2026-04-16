@@ -19,7 +19,6 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
         secure=settings.jwt_refresh_cookie_secure,
         samesite=settings.jwt_refresh_cookie_samesite,
         path=settings.jwt_refresh_cookie_path,
-        domain=settings.jwt_refresh_cookie_domain,
         expires=int(
             (
                 datetime.now(timezone.utc)
@@ -33,27 +32,23 @@ def delete_refresh_cookie(response: Response) -> None:
     response.delete_cookie(
         key=settings.jwt_refresh_cookie_name,
         path=settings.jwt_refresh_cookie_path,
-        domain=settings.jwt_refresh_cookie_domain,
     )
 
 
 @router.post(
     '/register',
     status_code=status.HTTP_201_CREATED,
-    response_model=UserPublic,
 )
 async def register(
     user_create: UserCreate,
     auth_service: AuthServiceDep,
 ) -> UserPublic:
-    user = await auth_service.register(user_create)
-    return user
+    return await auth_service.register(user_create)
 
 
 @router.post(
     '/login',
     status_code=status.HTTP_200_OK,
-    response_model=TokenPairResponse,
 )
 async def login(
     login_request: LoginRequest,
@@ -74,7 +69,6 @@ async def login(
 @router.get(
     '/me',
     status_code=status.HTTP_200_OK,
-    response_model=UserPublic,
 )
 async def me(current_user: CurrentUserDep) -> UserPublic:
     return current_user
@@ -83,7 +77,6 @@ async def me(current_user: CurrentUserDep) -> UserPublic:
 @router.post(
     '/logout',
     status_code=status.HTTP_200_OK,
-    response_model=SuccessResponse,
 )
 async def logout(
     response: Response,
@@ -98,7 +91,6 @@ async def logout(
 @router.post(
     '/refresh',
     status_code=status.HTTP_200_OK,
-    response_model=TokenPairResponse,
 )
 async def refresh(
     response: Response,

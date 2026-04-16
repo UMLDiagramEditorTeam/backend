@@ -41,17 +41,17 @@ class AuthService:
         password = str(user_dump.pop('password'))
         password_hash = hash_password(password)
 
-        user = UserModel(
-            **user_dump,
-            password_hash=password_hash,
-            is_active=True,
+        created_user = await self._user_service.create_user_model(
+            UserModel(
+                **user_dump,
+                password_hash=password_hash,
+                is_active=True,
+            )
         )
-        user = await self._user_service.create_user_model(user)
-        user = await self._rbac_service.assign_role_to_user(
-            user,
+        return await self._rbac_service.assign_role_to_user(
+            created_user,
             settings.rbac_default_role,
         )
-        return user
 
     async def authenticate_user(self, email: str, password: str) -> UserModel:
         user = await self._user_service.get_user_by_email(email)

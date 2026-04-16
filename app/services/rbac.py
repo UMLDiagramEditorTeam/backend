@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload
-from sqlmodel import select
+from sqlmodel import delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.permissions import PermissionModel
@@ -193,6 +193,29 @@ class RBACService:
                     detail=f'Role "{role_name}" not found',
                 )
             roles.append(role)
+
+        await self._session.exec(
+            delete(UserRoleLink).where(UserRoleLink.user_id == user.id)
+        )
+
+        for role in roles:
+            self._session.add(
+                UserRoleLink(
+                    user_id=user.id,
+                    role_id=role.id,
+                )
+            )
+
+        await self._session.commit()
+
+        loaded_user = await self._session.get(UserModel, user.id)
+        if loaded_user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='User not found',
+            )
+
+        return loaded_user
 
     @staticmethod
     def collect_user_scopes(user: UserModel) -> set[str]:

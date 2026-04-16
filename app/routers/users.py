@@ -1,9 +1,10 @@
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Security, status
+from fastapi import APIRouter, HTTPException, Query, Security, status
 
 from app.dependencies.rbac import CurrentUserWithScopesDep
+from app.dependencies.rbac_service import RBACServiceDep
 from app.dependencies.services import UserServiceDep
 from app.models.users import UserCreate, UserPublic, UserUpdate
 from app.schemas.base import PaginatedResponse
@@ -88,19 +89,17 @@ async def update_user_roles(
     user_id: UUID,
     request: UpdateUserRolesRequest,
     user_service: UserServiceDep,
-    current_user: Annotated[
+    rbac_service: RBACServiceDep,
+    _: Annotated[
         object,
         Security(CurrentUserWithScopesDep, scopes=['users:update_roles']),
     ],
 ) -> UserPublic:
     user = await user_service.get_user(user_id)
     if user is None:
-        raise ValueError('User not found')
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='User not found',
+        )
 
-    from app.services.rbac import RBACService  # local import to avoid cycles
-
-    rbac_service = RBACService(
-        user_service._UserService__user_repository._Repository__session
-    )  # noqa: SLF001
-    updated_user = await rbac_service.replace_user_roles(user, request.roles)
-    return updated_user
+    return await rbac_service.replace_user_roles(user, request.roles)
