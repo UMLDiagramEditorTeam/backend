@@ -60,12 +60,20 @@ class MethodService:
     async def get_method(self, method_id: UUID) -> Optional[MethodModel]:
         return await self.__method_repository.get(method_id)
 
+    async def get_method_public(self, method_id: UUID) -> Optional[MethodPublic]:
+        methods = await self.__method_repository.fetch(
+            id=method_id, relations=['arguments']
+        )
+        if not methods:
+            return None
+        return methods[0]  # type: ignore[return-value]
+
     async def create_method(
         self,
         method_create: MethodCreate,
         class_id: Optional[UUID] = None,
         interface_id: Optional[UUID] = None,
-    ) -> MethodModel:
+    ) -> MethodPublic:
         method_data = method_create.model_dump(exclude={'arguments'})
         method = MethodModel(
             **method_data, class_id=class_id, interface_id=interface_id
@@ -75,20 +83,20 @@ class MethodService:
         arguments = method_create.arguments
         await self.__argument_service.create_arguments(method.id, arguments)
 
-        return method
+        return await self.get_method_public(method.id)  # type: ignore[return-value]
 
     async def update_method(
         self,
         method_id: UUID,
         method_update: MethodUpdate,
-    ) -> Optional[MethodModel]:
-        method = await self.__method_repository.update(method_id, method_update)
+    ) -> Optional[MethodPublic]:
+        await self.__method_repository.update(method_id, method_update)
 
         await self.__argument_service.replace_method_arguments(
             method_id, method_update.arguments
         )
 
-        return method
+        return await self.get_method_public(method_id)
 
     async def delete_method(self, method_id: UUID) -> Optional[MethodModel]:
         return await self.__method_repository.delete(method_id)

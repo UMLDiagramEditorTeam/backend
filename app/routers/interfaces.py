@@ -10,9 +10,7 @@ from app.schemas.interfaces import InterfaceFilters
 
 # ruff: noqa: FAST003 - параметр пути обрабатывается через зависимость
 
-router = APIRouter(
-    prefix='/projects/{project_id}/windows/{window_id}/interfaces', tags=['Interfaces']
-)
+router = APIRouter(prefix='/windows/{window_id}/interfaces', tags=['Interfaces'])
 
 
 @router.get(
@@ -29,7 +27,10 @@ async def get_interfaces(
     total = await interface_service.count_interfaces(window.id, filters)
 
     return PaginatedResponse(
-        data=interfaces, total=total, page=filters.page, limit=filters.limit
+        data=interfaces,
+        total=total,
+        page=filters.page,
+        limit=filters.limit,
     )
 
 
@@ -43,7 +44,8 @@ async def create_interface(
     interface_service: InterfaceServiceDep,
 ) -> InterfacePublic:
     return await interface_service.create_interface(  # type: ignore[return-value]
-        window_id=window.id, interface_create=interface_create
+        window_id=window.id,
+        interface_create=interface_create,
     )
 
 
@@ -62,7 +64,7 @@ async def get_interface(
     status_code=status.HTTP_200_OK,
 )
 async def update_interface(
-    interface: InterfaceUpdate,
+    interface: InterfaceVerifiedDep,
     interface_update: InterfaceUpdate,
     interface_service: InterfaceServiceDep,
 ) -> InterfacePublic:

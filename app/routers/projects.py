@@ -1,8 +1,8 @@
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
+from app.dependencies.auth import CurrentUserDep
 from app.dependencies.routers import ProjectVerifiedDep
 from app.dependencies.services import ProjectServiceDep
 from app.models import ProjectCreate, ProjectPublic, ProjectUpdate
@@ -16,16 +16,18 @@ router = APIRouter(prefix='/projects', tags=['Projects'])
 @router.get('/', status_code=status.HTTP_200_OK)
 async def get_projects(
     project_service: ProjectServiceDep,
+    current_user: CurrentUserDep,
     filters: Annotated[ProjectFilters, Query()],
 ) -> PaginatedResponse[ProjectPublic]:
-    # TODO: get user_id from jwt
+    projects = await project_service.get_projects(filters, user_id=current_user.id)
 
-    projects = await project_service.get_projects(filters)
-
-    total = await project_service.count_projects(filters)
+    total = await project_service.count_projects(filters, user_id=current_user.id)
 
     return PaginatedResponse(
-        data=projects, total=total, page=filters.page, limit=filters.limit
+        data=projects,
+        total=total,
+        page=filters.page,
+        limit=filters.limit,
     )
 
 
@@ -33,9 +35,9 @@ async def get_projects(
 async def create_project(
     project_create: ProjectCreate,
     project_service: ProjectServiceDep,
-    user_id: UUID,  # TODO: remove after adding authorization
+    current_user: CurrentUserDep,
 ) -> ProjectPublic:
-    return await project_service.create_project(project_create, user_id)
+    return await project_service.create_project(project_create, current_user.id)
 
 
 @router.get(
@@ -50,14 +52,13 @@ async def get_project(
 
 @router.put(
     '/{project_id}',
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
 )
 async def update_project(
     project: ProjectVerifiedDep,
     project_update: ProjectUpdate,
     project_service: ProjectServiceDep,
 ) -> ProjectPublic:
-
     return await project_service.update_project(project.id, project_update)
 
 
@@ -69,5 +70,4 @@ async def delete_project(
     project: ProjectVerifiedDep,
     project_service: ProjectServiceDep,
 ) -> None:
-
     await project_service.delete_project(project.id)

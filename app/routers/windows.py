@@ -61,11 +61,10 @@ async def get_window(
     status_code=status.HTTP_200_OK,
 )
 async def update_window(
-    window: WindowUpdate,
+    window: WindowVerifiedDep,
     window_update: WindowUpdate,
     window_service: WindowServiceDep,
 ) -> WindowPublic:
-
     return await window_service.update_window(window.id, window_update)
 
 
@@ -77,5 +76,4 @@ async def delete_window(
     window: WindowVerifiedDep,
     window_service: WindowServiceDep,
 ) -> None:
-
     await window_service.delete_window(window.id)
