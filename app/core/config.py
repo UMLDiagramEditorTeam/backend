@@ -11,7 +11,27 @@ class Settings(BaseSettings):
     db_pass: str = 'password'
     db_name: str = 'db'
 
-    model_config = SettingsConfigDict(env_file='.env')
+    jwt_private_key: str
+    jwt_algorithm: str = 'HS256'
+    jwt_access_token_expire_seconds: int = 3600
+    jwt_refresh_token_expire_seconds: int = 604800
+
+    jwt_refresh_cookie_name: str = 'refresh_token'
+    jwt_refresh_cookie_secure: bool = False
+    jwt_refresh_cookie_samesite: str = 'lax'
+    jwt_refresh_cookie_path: str = '/'
+    jwt_refresh_cookie_domain: str | None = None
+
+    rbac_admin_email: str = 'admin@example.com'
+    rbac_admin_password: str = 'admin123456'
+    rbac_admin_name: str = 'admin'
+    rbac_admin_role: str = 'admin'
+    rbac_default_role: str = 'public'
+
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_nested_delimiter='__',
+    )
 
     @property
     def database_url(self) -> str:

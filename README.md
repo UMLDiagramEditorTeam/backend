@@ -17,14 +17,25 @@
 
 Переменные среды указать в файле `.env`
 
-| Title   | Description | Type   | Default   |
-|---------|-------------|--------|-----------|
-| DB_HOST | DB host     | string | localhost |
-| DB_PORT | DB port     | number | 5432      |
-| DB_USER | DB username | string | postgres  |
-| DB_PASS | DB password | string | password  |
-| DB_NAME | DB name     | string | postgres  |
+| Title | Description | Type | Default |
+|------|------------|------|---------|
+| DB_HOST | DB host | string | localhost |
+| DB_PORT | DB port | number | 5432 |
+| DB_USER | DB username | string | postgres |
+| DB_PASS | DB password | string | password |
+| DB_NAME | DB name | string | postgres |
+| JWT_PRIVATE_KEY | Secret key used to sign JWT tokens | string | your_secret_key_here |
+| JWT_ALGORITHM | JWT signing algorithm | string | HS256 |
+| JWT_ACCESS_TOKEN_EXPIRE_SECONDS | Access token lifetime in seconds | number | 3600 |
+| JWT_REFRESH_TOKEN_EXPIRE_SECONDS | Refresh token lifetime in seconds | number | 604800 |
+| RBAC_ADMIN_EMAIL | Default admin user email | string | admin@example.com |
+| RBAC_ADMIN_PASSWORD | Default admin user password | string | admin123456 |
 
+Для генерации JWT_PRIVATE_KEY можно использовать openssl
+
+```bash
+openssl rand -hex 32
+```
 ## До запуска проекта
 
 Клонирование репозитория

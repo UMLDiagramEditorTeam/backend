@@ -11,7 +11,7 @@ from app.schemas.base import PaginatedResponse
 # ruff: noqa: FAST003 - параметр пути обрабатывается через зависимость
 
 router = APIRouter(
-    prefix='/projects/{project_id}/windows/{window_id}/classes/{class_id}/attributes',
+    prefix='/classes/{class_id}/attributes',
     tags=['Attributes'],
 )
 

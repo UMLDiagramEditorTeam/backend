@@ -1,4 +1,3 @@
-# app/dependencies/services.py
 from typing import Annotated
 
 from fastapi import Depends
@@ -15,8 +14,10 @@ from app.dependencies.repositories import (
     UserRepositoryDep,
     WindowRepositoryDep,
 )
+from app.dependencies.session import SessionDep
 from app.services.arguments import ArgumentService
 from app.services.attributes import AttributeService
+from app.services.auth import AuthService
 from app.services.classes import ClassService
 from app.services.interfaces import InterfaceService
 from app.services.methods import MethodService
@@ -32,6 +33,16 @@ async def get_user_service(user_repository: UserRepositoryDep) -> UserService:
 
 
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+
+
+async def get_auth_service(
+    session: SessionDep,
+    user_service: UserServiceDep,
+) -> AuthService:
+    return AuthService(session, user_service)
+
+
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
 
 async def get_project_service(
