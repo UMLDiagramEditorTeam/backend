@@ -9,7 +9,8 @@ from app.schemas.base import PaginatedResponse
 from app.schemas.relations import RelationFilters
 
 router = APIRouter(
-    prefix='/projects/{project_id}/windows/{window_id}/relations', tags=['Relations']
+    prefix='/windows/{window_id}/relations',
+    tags=['Relations'],
 )
 
 # ruff: noqa: FAST003 - параметр пути обрабатывается через зависимость
@@ -24,7 +25,6 @@ async def get_relations(
     relation_service: RelationServiceDep,
     filters: Annotated[RelationFilters, Query()],
 ) -> PaginatedResponse[RelationPublic]:
-
     relations = await relation_service.get_relations(window.id, filters)
 
     total = await relation_service.count_relations(window.id, filters)
@@ -46,7 +46,6 @@ async def create_relation(
     relation_create: RelationCreate,
     relation_service: RelationServiceDep,
 ) -> RelationPublic:
-
     return await relation_service.create_relation(window.id, relation_create)
 
 
@@ -57,7 +56,6 @@ async def create_relation(
 async def get_relation(
     relation: RelationVerifiedDep,
 ) -> RelationPublic:
-
     return relation
 
 
@@ -70,7 +68,6 @@ async def update_relation(
     relation_update: RelationUpdate,
     relation_service: RelationServiceDep,
 ) -> RelationPublic:
-
     return await relation_service.update_relation(relation.id, relation_update)
 
 
@@ -82,5 +79,4 @@ async def delete_relation(
     relation: RelationVerifiedDep,
     relation_service: RelationServiceDep,
 ) -> None:
-
     await relation_service.delete_relation(relation.id)

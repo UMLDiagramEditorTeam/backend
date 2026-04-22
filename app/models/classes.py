@@ -51,8 +51,8 @@ class ClassModel(BaseModel, ClassBase, table=True):
     attributes: list['AttributeModel'] = Relationship(back_populates='class_')
     methods: list['MethodModel'] = Relationship(back_populates='class_')
     relations_start: list['RelationModel'] = Relationship(
-        back_populates='start_class',
-        sa_relationship_kwargs={'foreign_keys': 'RelationModel.start_class_id'},
+        back_populates='begin_class',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.begin_class_id'},
     )
     relations_end: list['RelationModel'] = Relationship(
         back_populates='end_class',

@@ -16,12 +16,14 @@ class RelationService:
         self, window_id: UUID, filters: RelationFilters
     ) -> Sequence[RelationModel]:
         return await self.__relation_repository.fetch(
-            window_id=window_id, **filters.model_dump(exclude_unset=True)
+            window_id=window_id,
+            **filters.model_dump(exclude_unset=True),
         )
 
     async def count_relations(self, window_id: UUID, filters: RelationFilters) -> int:
         return await self.__relation_repository.count_all(
-            window_id=window_id, **filters.model_dump(exclude_unset=True)
+            window_id=window_id,
+            **filters.model_dump(exclude_unset=True),
         )
 
     async def get_relation(self, relation_id: UUID) -> Optional[RelationModel]:
@@ -30,8 +32,10 @@ class RelationService:
     async def create_relation(
         self, window_id: UUID, relation_create: RelationCreate
     ) -> RelationModel:
-        relation = RelationModel(**relation_create.model_dump(), window_id=window_id)
-
+        relation = RelationModel(
+            **relation_create.model_dump(),
+            window_id=window_id,
+        )
         return await self.__relation_repository.save(relation)
 
     async def update_relation(

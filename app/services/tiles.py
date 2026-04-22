@@ -20,7 +20,10 @@ class TileService:
     async def get_tile(self, tile_id: UUID) -> Optional[TileModel]:
         return await self.__tile_repository.get(tile_id)
 
-    async def create_tile(self, tile_create: TileCreate) -> TileModel:
+    async def create_tile(self, tile_create: TileCreate | None = None) -> TileModel:
+        if tile_create is None:
+            tile_create = TileCreate()
+
         tile = TileModel(
             **tile_create.model_dump(),
         )

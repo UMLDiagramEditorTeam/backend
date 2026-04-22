@@ -18,6 +18,11 @@ down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+diagram_type = sa.Enum('CLASS_DIAGRAM', name='diagramtype')
+access_modifier = sa.Enum('PUBLIC', 'PRIVATE', 'PROTECTED', 'DEFAULT', name='accessmodifier')
+relation_type = sa.Enum('RELATION', 'ONE', 'MANY', 'ONE_AND_ONLY_ONE', 'ONE_OR_MANY', 'ZERO_OR_ONE', 'ZERO_OR_MANY', name='relationtype')
+
+
 
 def upgrade() -> None:
     """Upgrade schema."""
@@ -55,7 +60,7 @@ def upgrade() -> None:
     )
     op.create_table('window',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False),
-    sa.Column('type', sa.Enum('CLASS_DIAGRAM', name='diagramtype'), nullable=False),
+    sa.Column('type', diagram_type, nullable=False),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), nullable=False),
     sa.Column('updated_at', postgresql.TIMESTAMP(timezone=True), nullable=False),
@@ -66,7 +71,7 @@ def upgrade() -> None:
     )
     op.create_table('class',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
-    sa.Column('access_modifier', sa.Enum('PUBLIC', 'PRIVATE', 'PROTECTED', 'DEFAULT', name='accessmodifier'), nullable=True),
+    sa.Column('access_modifier',access_modifier , nullable=True),
     sa.Column('is_abstract', sa.Boolean(), nullable=False),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), nullable=False),
@@ -92,7 +97,7 @@ def upgrade() -> None:
     )
     op.create_table('attribute',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
-    sa.Column('access_modifier', sa.Enum('PUBLIC', 'PRIVATE', 'PROTECTED', 'DEFAULT', name='accessmodifier'), nullable=True),
+    sa.Column('access_modifier', access_modifier, nullable=True),
     sa.Column('type', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
     sa.Column('is_final', sa.Boolean(), nullable=False),
     sa.Column('is_static', sa.Boolean(), nullable=False),
@@ -107,7 +112,7 @@ def upgrade() -> None:
     )
     op.create_table('method',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
-    sa.Column('access_modifier', sa.Enum('PUBLIC', 'PRIVATE', 'PROTECTED', 'DEFAULT', name='accessmodifier'), nullable=True),
+    sa.Column('access_modifier', access_modifier, nullable=True),
     sa.Column('return_type', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
     sa.Column('is_final', sa.Boolean(), nullable=False),
     sa.Column('is_static', sa.Boolean(), nullable=False),
@@ -126,8 +131,8 @@ def upgrade() -> None:
     )
     op.create_table('relation',
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
-    sa.Column('start_type', sa.Enum('RELATION', 'ONE', 'MANY', 'ONE_AND_ONLY_ONE', 'ONE_OR_MANY', 'ZERO_OR_ONE', 'ZERO_OR_MANY', name='relationtype'), nullable=False),
-    sa.Column('end_type', sa.Enum('RELATION', 'ONE', 'MANY', 'ONE_AND_ONLY_ONE', 'ONE_OR_MANY', 'ZERO_OR_ONE', 'ZERO_OR_MANY', name='relationtype'), nullable=False),
+    sa.Column('start_type', relation_type, nullable=False),
+    sa.Column('end_type', relation_type, nullable=False),
     sa.Column('start_class_id', sa.Uuid(), nullable=True),
     sa.Column('start_interface_id', sa.Uuid(), nullable=True),
     sa.Column('end_class_id', sa.Uuid(), nullable=True),
@@ -175,4 +180,8 @@ def downgrade() -> None:
     op.drop_table('project')
     op.drop_table('user')
     op.drop_table('tile')
+
+    diagram_type.drop(op.get_bind(), checkfirst=False)
+    access_modifier.drop(op.get_bind(), checkfirst=False)
+    relation_type.drop(op.get_bind(), checkfirst=False)
     # ### end Alembic commands ###

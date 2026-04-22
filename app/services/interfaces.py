@@ -1,6 +1,8 @@
 from typing import Optional, Sequence
 from uuid import UUID
 
+from fastapi import HTTPException, status
+
 from app.dependencies.repositories import (
     InterfaceRepository,
     InterfaceRepositoryDep,
@@ -68,6 +70,12 @@ class InterfaceService:
         self, interface_id: UUID, interface_update: InterfaceUpdate
     ) -> Optional[InterfaceModel]:
         interface = await self.__interface_repository.get(interface_id)
+        if interface is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Interface not found',
+            )
+
         await self.__tile_service.update_tile(interface.tile_id, interface_update.tile)
         return await self.__interface_repository.update(interface_id, interface_update)
 
