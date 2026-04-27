@@ -6,23 +6,23 @@ from app.core.config import settings
 from app.dependencies.auth import CurrentUserDep, RefreshTokenDep
 from app.dependencies.services import AuthServiceDep
 from app.models.users import UserCreate, UserPublic
-from app.schemas.auth import LoginRequest, SuccessResponse, TokenPairResponse
+from app.schemas.auth import LoginRequest, SuccessResponse, TokenResponse
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
 
 def set_refresh_cookie(response: Response, refresh_token: str) -> None:
     response.set_cookie(
-        key=settings.jwt_refresh_cookie_name,
+        key=settings.auth.jwt_refresh_cookie_name,
         value=refresh_token,
         httponly=True,
-        secure=settings.jwt_refresh_cookie_secure,
-        samesite=settings.jwt_refresh_cookie_samesite,
-        path=settings.jwt_refresh_cookie_path,
+        secure=settings.auth.jwt_refresh_cookie_secure,
+        samesite=settings.auth.jwt_refresh_cookie_samesite,
+        path=settings.auth.jwt_refresh_cookie_path,
         expires=int(
             (
                 datetime.now(timezone.utc)
-                + timedelta(seconds=settings.jwt_refresh_token_expire_seconds)
+                + timedelta(seconds=settings.auth.jwt_refresh_token_expire_seconds)
             ).timestamp()
         ),
     )
@@ -30,8 +30,8 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
 
 def delete_refresh_cookie(response: Response) -> None:
     response.delete_cookie(
-        key=settings.jwt_refresh_cookie_name,
-        path=settings.jwt_refresh_cookie_path,
+        key=settings.auth.jwt_refresh_cookie_name,
+        path=settings.auth.jwt_refresh_cookie_path,
     )
 
 
@@ -54,15 +54,16 @@ async def login(
     login_request: LoginRequest,
     response: Response,
     auth_service: AuthServiceDep,
-) -> TokenPairResponse:
-    auth_result = await auth_service.login(
+) -> TokenResponse:
+    tokens = await auth_service.login(
         email=login_request.email,
         password=login_request.password,
     )
-    set_refresh_cookie(response, auth_result['refresh_token'])
-    return TokenPairResponse(
-        access_token=auth_result['access_token'],
-        refresh_token=auth_result['refresh_token'],
+
+    set_refresh_cookie(response, tokens.refresh_token)
+
+    return TokenResponse(
+        access_token=tokens.access_token,
     )
 
 
@@ -96,10 +97,11 @@ async def refresh(
     response: Response,
     refresh_token: RefreshTokenDep,
     auth_service: AuthServiceDep,
-) -> TokenPairResponse:
-    auth_result = await auth_service.refresh(refresh_token)
-    set_refresh_cookie(response, auth_result['refresh_token'])
-    return TokenPairResponse(
-        access_token=auth_result['access_token'],
-        refresh_token=auth_result['refresh_token'],
+) -> TokenResponse:
+    tokens = await auth_service.refresh(refresh_token)
+
+    set_refresh_cookie(response, tokens.refresh_token)
+
+    return TokenResponse(
+        access_token=tokens.access_token,
     )

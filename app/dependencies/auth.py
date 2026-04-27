@@ -1,40 +1,19 @@
 from typing import Annotated
 
-from fastapi import Cookie, Depends, Header, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, status
 
 from app.core.config import settings
+from app.core.security import oauth2_scheme
 from app.dependencies.services import AuthServiceDep
 from app.models.users import UserModel
 
-
-def _extract_bearer_token(authorization: str | None) -> str:
-    if authorization is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Authorization header is missing',
-        )
-    scheme, _, token = authorization.partition(' ')
-    if scheme.lower() != 'bearer' or not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Invalid authorization header',
-        )
-    return token
-
-
-async def get_access_token(
-    authorization: Annotated[str | None, Header()] = None,
-) -> str:
-    return _extract_bearer_token(authorization)
-
-
-AccessTokenDep = Annotated[str, Depends(get_access_token)]
+AccessTokenDep = Annotated[str, Depends(oauth2_scheme)]
 
 
 async def get_refresh_token_from_cookie(
     refresh_token: Annotated[
         str | None,
-        Cookie(alias=settings.jwt_refresh_cookie_name),
+        Cookie(alias=settings.auth.jwt_refresh_cookie_name),
     ] = None,
 ) -> str:
     if refresh_token is None:

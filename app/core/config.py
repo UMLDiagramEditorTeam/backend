@@ -1,15 +1,41 @@
-from anyio.functools import lru_cache
+from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
 
-class Settings(BaseSettings):
-    db_schema: str = 'postgresql+asyncpg'
-    db_host: str = 'localhost'
-    db_port: int = 5432
-    db_user: str = 'postgres'
-    db_pass: str = 'password'
-    db_name: str = 'db'
+class DBSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix='DB_',
+        env_file='.env',
+        extra='ignore',
+    )
+
+    schema: str = 'postgresql+asyncpg'
+    host: str = 'localhost'
+    port: int = 5432
+    user: str = 'postgres'
+    password: str = 'password'
+    name: str = 'db'
+
+    @property
+    def url(self) -> str:
+        return URL.create(
+            drivername=self.schema,
+            username=self.user,
+            password=self.password,
+            host=self.host,
+            port=self.port,
+            database=self.name,
+        ).render_as_string(hide_password=False)
+
+
+class AuthSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix='AUTH_',
+        env_file='.env',
+        extra='ignore',
+    )
 
     jwt_private_key: str
     jwt_algorithm: str = 'HS256'
@@ -22,27 +48,34 @@ class Settings(BaseSettings):
     jwt_refresh_cookie_path: str = '/'
     jwt_refresh_cookie_domain: str | None = None
 
-    rbac_admin_email: str = 'admin@example.com'
-    rbac_admin_password: str = 'admin123456'
-    rbac_admin_name: str = 'admin'
-    rbac_admin_role: str = 'admin'
-    rbac_default_role: str = 'public'
 
+class RBACSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix='RBAC_',
+        env_file='.env',
+        extra='ignore',
+    )
+
+    admin_email: str = 'admin@example.com'
+    admin_password: str = 'admin123456'
+    admin_name: str = 'admin'
+    admin_role: str = 'admin'
+    default_role: str = 'public'
+
+
+class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file='.env',
-        env_nested_delimiter='__',
+        extra='ignore',
     )
+
+    db: DBSettings = DBSettings()
+    auth: AuthSettings = AuthSettings()
+    rbac: RBACSettings = RBACSettings()
 
     @property
     def database_url(self) -> str:
-        return URL.create(
-            drivername=self.db_schema,
-            username=self.db_user,
-            password=self.db_pass,
-            host=self.db_host,
-            port=self.db_port,
-            database=self.db_name,
-        ).render_as_string(hide_password=False)
+        return self.db.url
 
 
 @lru_cache

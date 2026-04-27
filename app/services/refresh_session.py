@@ -1,15 +1,13 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
-
+from app.dependencies.repositories import RefreshSessionRepository
 from app.models.refresh_sessions import RefreshSessionModel
 
 
 class RefreshSessionService:
-    def __init__(self, session: AsyncSession):
-        self._session = session
+    def __init__(self, refresh_session_repository: RefreshSessionRepository):
+        self._refresh_session_repository = refresh_session_repository
 
     async def create_session(
         self,
@@ -25,37 +23,35 @@ class RefreshSessionService:
             expires_at=expires_at,
             is_valid=True,
         )
-        self._session.add(refresh_session)
-        await self._session.commit()
-        await self._session.refresh(refresh_session)
-        return refresh_session
+        return await self._refresh_session_repository.save(refresh_session)
 
     async def get_valid_session_by_refresh_jti(
         self,
         refresh_jti: str,
     ) -> RefreshSessionModel | None:
-        statement = select(RefreshSessionModel).where(
-            RefreshSessionModel.refresh_jti == refresh_jti,
-            RefreshSessionModel.is_valid.is_(True),
+        sessions = await self._refresh_session_repository.fetch(
+            refresh_jti=refresh_jti,
+            is_valid=True,
         )
-        result = await self._session.exec(statement)
-        refresh_session = result.first()
+        refresh_session = sessions[0] if sessions else None
+
         if refresh_session is None:
             return None
+
         if refresh_session.expires_at <= datetime.now(timezone.utc):
             refresh_session.is_valid = False
-            self._session.add(refresh_session)
-            await self._session.commit()
+            await self._refresh_session_repository.save(refresh_session)
             return None
+
         return refresh_session
 
     async def invalidate_session(self, refresh_session: RefreshSessionModel) -> None:
         refresh_session.is_valid = False
-        self._session.add(refresh_session)
-        await self._session.commit()
+        await self._refresh_session_repository.save(refresh_session)
 
     async def invalidate_session_by_refresh_jti(self, refresh_jti: str) -> None:
         refresh_session = await self.get_valid_session_by_refresh_jti(refresh_jti)
         if refresh_session is None:
             return
+
         await self.invalidate_session(refresh_session)

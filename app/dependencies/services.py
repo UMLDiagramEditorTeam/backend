@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from app.dependencies.rbac_service import RBACServiceDep
 from app.dependencies.repositories import (
     ArgumentRepositoryDep,
     AttributeRepositoryDep,
@@ -9,12 +10,12 @@ from app.dependencies.repositories import (
     InterfaceRepositoryDep,
     MethodRepositoryDep,
     ProjectRepositoryDep,
+    RefreshSessionRepositoryDep,
     RelationRepositoryDep,
     TileRepositoryDep,
     UserRepositoryDep,
     WindowRepositoryDep,
 )
-from app.dependencies.session import SessionDep
 from app.services.arguments import ArgumentService
 from app.services.attributes import AttributeService
 from app.services.auth import AuthService
@@ -22,6 +23,7 @@ from app.services.classes import ClassService
 from app.services.interfaces import InterfaceService
 from app.services.methods import MethodService
 from app.services.projects import ProjectService
+from app.services.refresh_session import RefreshSessionService
 from app.services.relations import RelationService
 from app.services.tiles import TileService
 from app.services.users import UserService
@@ -35,11 +37,28 @@ async def get_user_service(user_repository: UserRepositoryDep) -> UserService:
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 
 
+async def get_refresh_session_service(
+    refresh_session_repository: RefreshSessionRepositoryDep,
+) -> RefreshSessionService:
+    return RefreshSessionService(refresh_session_repository)
+
+
+RefreshSessionServiceDep = Annotated[
+    RefreshSessionService,
+    Depends(get_refresh_session_service),
+]
+
+
 async def get_auth_service(
-    session: SessionDep,
-    user_service: UserServiceDep,
+    user_repository: UserRepositoryDep,
+    refresh_session_service: RefreshSessionServiceDep,
+    rbac_service: RBACServiceDep,
 ) -> AuthService:
-    return AuthService(session, user_service)
+    return AuthService(
+        user_repository,
+        refresh_session_service,
+        rbac_service,
+    )
 
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]

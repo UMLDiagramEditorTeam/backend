@@ -34,13 +34,13 @@ def _build_payload(
 def create_access_token(user_id: UUID) -> tuple[str, str, datetime]:
     payload, jti, expires_at = _build_payload(
         user_id=user_id,
-        expires_in_seconds=settings.jwt_access_token_expire_seconds,
+        expires_in_seconds=settings.auth.jwt_access_token_expire_seconds,
         token_type=TokenType.ACCESS,
     )
     token = jwt.encode(
         payload,
-        settings.jwt_private_key,
-        algorithm=settings.jwt_algorithm,
+        settings.auth.jwt_private_key,
+        algorithm=settings.auth.jwt_algorithm,
     )
     return token, jti, expires_at
 
@@ -48,13 +48,13 @@ def create_access_token(user_id: UUID) -> tuple[str, str, datetime]:
 def create_refresh_token(user_id: UUID) -> tuple[str, str, datetime]:
     payload, jti, expires_at = _build_payload(
         user_id=user_id,
-        expires_in_seconds=settings.jwt_refresh_token_expire_seconds,
+        expires_in_seconds=settings.auth.jwt_refresh_token_expire_seconds,
         token_type=TokenType.REFRESH,
     )
     token = jwt.encode(
         payload,
-        settings.jwt_private_key,
-        algorithm=settings.jwt_algorithm,
+        settings.auth.jwt_private_key,
+        algorithm=settings.auth.jwt_algorithm,
     )
     return token, jti, expires_at
 
@@ -63,8 +63,8 @@ def decode_token(token: str) -> dict:
     try:
         return jwt.decode(
             token,
-            settings.jwt_private_key,
-            algorithms=[settings.jwt_algorithm],
+            settings.auth.jwt_private_key,
+            algorithms=[settings.auth.jwt_algorithm],
         )
     except InvalidTokenError as exc:
         raise ValueError('Invalid token') from exc

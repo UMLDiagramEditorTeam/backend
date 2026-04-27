@@ -1,17 +1,22 @@
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
-
 from app.core.config import settings
+from app.core.rbac_map import ROLE_SCOPES_MAP
+from app.dependencies.repositories import RoleRepository, UserRepository
 from app.models.permissions import PermissionModel
 from app.models.users import UserModel
 from app.services.hasher import hash_password
-from app.services.rbac import ROLE_SCOPES_MAP, RBACService
+from app.services.rbac import RBACService
 
 
 class BootstrapService:
-    def __init__(self, session: AsyncSession):
-        self._session = session
-        self._rbac_service = RBACService(session)
+    def __init__(
+        self,
+        user_repository: UserRepository,
+        role_repository: RoleRepository,
+        rbac_service: RBACService,
+    ):
+        self._user_repository = user_repository
+        self._role_repository = role_repository
+        self._rbac_service = rbac_service
 
     async def bootstrap_roles_and_permissions(self) -> None:
         all_scopes: set[str] = set()
@@ -24,11 +29,11 @@ class BootstrapService:
             created_permissions[scope] = permission
 
         public_role = await self._rbac_service.get_or_create_role(
-            settings.rbac_default_role,
+            settings.rbac.default_role,
             description='Default role for registered users',
         )
         admin_role = await self._rbac_service.get_or_create_role(
-            settings.rbac_admin_role,
+            settings.rbac.admin_role,
             description='Administrator role',
         )
 
@@ -36,38 +41,33 @@ class BootstrapService:
         public_role.permissions.extend(
             [
                 created_permissions[scope]
-                for scope in ROLE_SCOPES_MAP.get(settings.rbac_default_role, [])
+                for scope in ROLE_SCOPES_MAP.get(settings.rbac.default_role, [])
             ]
         )
 
         admin_role.permissions.clear()
         admin_role.permissions.extend(list(created_permissions.values()))
 
-        self._session.add(public_role)
-        self._session.add(admin_role)
-        await self._session.commit()
+        await self._role_repository.save(public_role)
+        await self._role_repository.save(admin_role)
 
     async def bootstrap_admin_user(self) -> None:
-        statement = select(UserModel).where(
-            UserModel.email == settings.rbac_admin_email
-        )
-        result = await self._session.exec(statement)
-        admin_user = result.first()
+        users = await self._user_repository.fetch(email=settings.rbac.admin_email)
+        admin_user = users[0] if users else None
 
         if admin_user is None:
-            admin_user = UserModel(
-                name=settings.rbac_admin_name,
-                email=settings.rbac_admin_email,
-                password_hash=hash_password(settings.rbac_admin_password),
-                is_active=True,
+            admin_user = await self._user_repository.save(
+                UserModel(
+                    name=settings.rbac.admin_name,
+                    email=settings.rbac.admin_email,
+                    password_hash=hash_password(settings.rbac.admin_password),
+                    is_active=True,
+                )
             )
-            self._session.add(admin_user)
-            await self._session.commit()
-            await self._session.refresh(admin_user)
 
         await self._rbac_service.assign_role_to_user(
             admin_user,
-            settings.rbac_admin_role,
+            settings.rbac.admin_role,
         )
 
     async def run(self) -> None:

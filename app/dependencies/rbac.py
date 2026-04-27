@@ -1,33 +1,24 @@
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Security, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, SecurityScopes
+from fastapi.security import SecurityScopes
 
+from app.core.security import oauth2_scheme
+from app.dependencies.rbac_service import RBACServiceDep
 from app.dependencies.services import AuthServiceDep
 from app.models.users import UserModel
-from app.services.rbac import RBACService
-
-bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user_with_scopes(
     security_scopes: SecurityScopes,
     auth_service: AuthServiceDep,
-    credentials: Annotated[
-        HTTPAuthorizationCredentials | None,
-        Security(bearer_scheme),
-    ],
+    rbac_service: RBACServiceDep,
+    access_token: Annotated[str, Security(oauth2_scheme)],
 ) -> UserModel:
-    if credentials is None or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Not authenticated',
-        )
-
-    user = await auth_service.get_current_user_with_roles(credentials.credentials)
+    user = await auth_service.get_current_user_with_roles(access_token)
 
     if security_scopes.scopes:
-        user_scopes = RBACService.collect_user_scopes(user)
+        user_scopes = rbac_service.collect_user_scopes(user)
         if '*' not in user_scopes:
             missing_scopes = [
                 scope for scope in security_scopes.scopes if scope not in user_scopes

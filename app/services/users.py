@@ -3,9 +3,8 @@ from uuid import UUID
 
 from app.dependencies.repositories import UserRepository, UserRepositoryDep
 from app.models.projects import ProjectModel
-from app.models.users import UserCreate, UserModel, UserUpdate
+from app.models.users import UserModel, UserUpdate
 from app.schemas.users import UserFilters
-from app.services.hasher import hash_password
 
 
 class UserService:
@@ -24,13 +23,6 @@ class UserService:
             **filters.model_dump(exclude_unset=True)
         )
 
-    async def create_user(self, user_create: UserCreate) -> UserModel:
-        user_dump = user_create.model_dump()
-        password = str(user_dump.pop('password'))
-        password_hash = hash_password(password)
-        user = UserModel(**user_dump, password_hash=password_hash, is_active=True)
-        return await self.__user_repository.save(user)
-
     async def create_user_model(self, user: UserModel) -> UserModel:
         return await self.__user_repository.save(user)
 
@@ -48,24 +40,7 @@ class UserService:
         user_update: UserUpdate,
         user_id: UUID,
     ) -> Optional[UserModel]:
-        update_data = user_update.model_dump(exclude_unset=True)
-
-        password = update_data.pop('password', None)
-        if password is not None:
-            update_data['password_hash'] = hash_password(password)
-
-        user_update_with_hash = UserUpdate.model_validate(update_data)
-        return await self.__user_repository.update(user_id, user_update_with_hash)
-
-    async def change_password(
-        self, user_id: UUID, new_password: str
-    ) -> Optional[UserModel]:
-        current_user = await self.get_user(user_id)
-        if current_user is None:
-            return None
-
-        current_user.password_hash = hash_password(new_password)
-        return await self.__user_repository.save(current_user)
+        return await self.__user_repository.update(user_id, user_update)
 
     async def delete_user(self, user_id: UUID) -> Optional[UserModel]:
         return await self.__user_repository.delete(user_id)

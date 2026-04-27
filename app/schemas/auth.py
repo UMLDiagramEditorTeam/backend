@@ -8,9 +8,14 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class TokenPairResponse(BaseModel):
+class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
+    token_type: str = 'bearer'
+
+
+class TokenResponse(BaseModel):
+    access_token: str
     token_type: str = 'bearer'
 
 
