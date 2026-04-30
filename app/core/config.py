@@ -5,13 +5,7 @@ from sqlalchemy.engine import URL
 
 
 class DBSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_prefix='DB_',
-        env_file='.env',
-        extra='ignore',
-    )
-
-    schema: str = 'postgresql+asyncpg'
+    driver: str = 'postgresql+asyncpg'
     host: str = 'localhost'
     port: int = 5432
     user: str = 'postgres'
@@ -21,7 +15,7 @@ class DBSettings(BaseSettings):
     @property
     def url(self) -> str:
         return URL.create(
-            drivername=self.schema,
+            drivername=self.driver,
             username=self.user,
             password=self.password,
             host=self.host,
@@ -31,12 +25,6 @@ class DBSettings(BaseSettings):
 
 
 class AuthSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_prefix='AUTH_',
-        env_file='.env',
-        extra='ignore',
-    )
-
     jwt_private_key: str
     jwt_algorithm: str = 'HS256'
     jwt_access_token_expire_seconds: int = 3600
@@ -50,12 +38,6 @@ class AuthSettings(BaseSettings):
 
 
 class RBACSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_prefix='RBAC_',
-        env_file='.env',
-        extra='ignore',
-    )
-
     admin_email: str = 'admin@example.com'
     admin_password: str = 'admin123456'
     admin_name: str = 'admin'
@@ -66,12 +48,14 @@ class RBACSettings(BaseSettings):
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file='.env',
+        env_nested_delimiter='__',
         extra='ignore',
+        case_sensitive=False,
     )
 
-    db: DBSettings = DBSettings()
-    auth: AuthSettings = AuthSettings()
-    rbac: RBACSettings = RBACSettings()
+    db: DBSettings
+    auth: AuthSettings
+    rbac: RBACSettings
 
     @property
     def database_url(self) -> str:
