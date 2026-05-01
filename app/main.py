@@ -3,6 +3,11 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 
 from app.db.database import async_session_factory
+from app.models.permissions import PermissionModel
+from app.models.role_permissions import RolePermissionLink
+from app.models.roles import RoleModel
+from app.models.user_roles import UserRoleLink
+from app.models.users import UserModel
 from app.routers import (
     attributes,
     auth,
@@ -15,6 +20,8 @@ from app.routers import (
     windows,
 )
 from app.services.bootstrap import BootstrapService
+from app.services.rbac import RBACService
+from app.utils.repository import Repository
 
 api_prefix = '/api'
 
@@ -22,8 +29,28 @@ api_prefix = '/api'
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     async with async_session_factory() as session:
-        bootstrap_service = BootstrapService(session)
+        user_repository = Repository[UserModel](session)
+        role_repository = Repository[RoleModel](session)
+        permission_repository = Repository[PermissionModel](session)
+        user_role_repository = Repository[UserRoleLink](session)
+        role_permission_repository = Repository[RolePermissionLink](session)
+
+        rbac_service = RBACService(
+            role_repository=role_repository,
+            permission_repository=permission_repository,
+            user_repository=user_repository,
+            user_role_repository=user_role_repository,
+            role_permission_repository=role_permission_repository,
+        )
+
+        bootstrap_service = BootstrapService(
+            user_repository=user_repository,
+            role_repository=role_repository,
+            rbac_service=rbac_service,
+        )
+
         await bootstrap_service.run()
+
     yield
 
 

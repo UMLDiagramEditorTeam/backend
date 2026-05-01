@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -25,7 +26,7 @@ class DBSettings(BaseSettings):
 
 
 class AuthSettings(BaseSettings):
-    jwt_private_key: str
+    jwt_private_key: str = 'your_secret_key_here'
     jwt_algorithm: str = 'HS256'
     jwt_access_token_expire_seconds: int = 3600
     jwt_refresh_token_expire_seconds: int = 604800
@@ -53,9 +54,9 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    db: DBSettings
-    auth: AuthSettings
-    rbac: RBACSettings
+    db: DBSettings = Field(default_factory=DBSettings)
+    auth: AuthSettings = Field(default_factory=AuthSettings)
+    rbac: RBACSettings = Field(default_factory=RBACSettings)
 
     @property
     def database_url(self) -> str:
