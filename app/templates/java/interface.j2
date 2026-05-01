@@ -1,0 +1,11 @@
+public interface {{ interface.name }} {% if extends %}extends {{ extends | map(attribute='name') | join(', ') }}{% endif %}
+{
+{% for method in interface.methods %}
+    {{ method.return_type }} {{ method.name }}(
+        {%- for arg in method.arguments -%}
+            {{ arg.type }} {{ arg.name }}
+            {%- if not loop.last %}, {% endif %}
+        {%- endfor -%}
+    );
+{% endfor %}
+}

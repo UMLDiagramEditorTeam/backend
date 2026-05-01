@@ -1,12 +1,15 @@
+import json
 from typing import Annotated
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, Response, status
 
+from app.dependencies.code_generation import CodeGenerationServiceDep
 from app.dependencies.routers import ProjectVerifiedDep, WindowVerifiedDep
 from app.dependencies.services import WindowServiceDep
 from app.models.windows import WindowCreate, WindowPublic, WindowUpdate
 from app.schemas.base import PaginatedResponse
 from app.schemas.windows import WindowFilters
+from app.services.code_generation import TargetLanguage
 
 router = APIRouter(prefix='/projects/{project_id}/windows', tags=['Windows'])
 
@@ -77,3 +80,26 @@ async def delete_window(
     window_service: WindowServiceDep,
 ) -> None:
     await window_service.delete_window(window.id)
+
+
+@router.post(
+    '/{window_id}/{language}',
+    status_code=status.HTTP_200_OK,
+)
+async def generate_code(
+    window: WindowVerifiedDep,
+    language: TargetLanguage,
+    code_generation_service: CodeGenerationServiceDep,
+) -> Response:
+
+    result = await code_generation_service.generate(
+        window_id=window.id,
+        language=language,
+    )
+
+    pretty_json = json.dumps(result, indent=4, ensure_ascii=False)
+
+    return Response(
+        content=pretty_json,
+        media_type='application/json',
+    )
