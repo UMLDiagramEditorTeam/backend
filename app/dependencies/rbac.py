@@ -4,8 +4,8 @@ from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import SecurityScopes
 
 from app.core.security import oauth2_scheme
-from app.dependencies.rbac_service import RBACServiceDep
-from app.dependencies.services import AuthServiceDep
+from app.dependencies.auth import AuthServiceDep
+from app.dependencies.services import RBACServiceDep
 from app.models.users import UserModel
 
 

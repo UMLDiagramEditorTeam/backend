@@ -4,8 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, Security, status
 
 from app.dependencies.rbac import CurrentUserWithScopesDep
-from app.dependencies.rbac_service import RBACServiceDep
-from app.dependencies.services import UserServiceDep
+from app.dependencies.services import RBACServiceDep, UserServiceDep
 from app.models.users import UserCreate, UserPublic, UserUpdate
 from app.schemas.base import PaginatedResponse
 from app.schemas.roles import UpdateUserRolesRequest

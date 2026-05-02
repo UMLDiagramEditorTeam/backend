@@ -3,7 +3,8 @@ from uuid import UUID
 from fastapi import HTTPException, status
 
 from app.core.config import settings
-from app.dependencies.repositories import UserRepository
+from app.dependencies.repositories import UserRepositoryDep
+from app.dependencies.services import RBACServiceDep, RefreshSessionServiceDep
 from app.models.users import UserCreate, UserModel
 from app.schemas.auth import TokenPair
 from app.services.hasher import hash_password, verify_password
@@ -13,16 +14,14 @@ from app.services.jwt_service import (
     decode_access_token,
     decode_refresh_token,
 )
-from app.services.rbac import RBACService
-from app.services.refresh_session import RefreshSessionService
 
 
 class AuthService:
     def __init__(
         self,
-        user_repository: UserRepository,
-        refresh_session_service: RefreshSessionService,
-        rbac_service: RBACService,
+        user_repository: UserRepositoryDep,
+        refresh_session_service: RefreshSessionServiceDep,
+        rbac_service: RBACServiceDep,
     ):
         self._user_repository = user_repository
         self._refresh_session_service = refresh_session_service

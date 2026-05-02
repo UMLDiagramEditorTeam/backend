@@ -25,6 +25,8 @@ from app.utils.repository import Repository
 
 api_prefix = '/api'
 
+api_version = 'v1'
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -56,14 +58,14 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title='UML Diagram Editor API',
-    version='1.1.1',
+    version=api_version,
     openapi_url=f'{api_prefix}/openapi.json',
     docs_url=f'{api_prefix}/docs',
     redoc_url=f'{api_prefix}/redoc',
     lifespan=lifespan,
 )
 
-app_router = APIRouter(prefix=f'{api_prefix}/v1')
+app_router = APIRouter(prefix=f'{api_prefix}/{api_version}')
 
 app_router.include_router(auth.router)
 app_router.include_router(users.router)

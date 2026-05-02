@@ -4,11 +4,11 @@ from uuid import UUID
 from fastapi import HTTPException, status
 
 from app.dependencies.repositories import (
-    PermissionRepository,
-    RolePermissionRepository,
-    RoleRepository,
-    UserRepository,
-    UserRoleRepository,
+    PermissionRepositoryDep,
+    RolePermissionRepositoryDep,
+    RoleRepositoryDep,
+    UserRepositoryDep,
+    UserRoleRepositoryDep,
 )
 from app.models.permissions import PermissionModel
 from app.models.roles import RoleModel
@@ -18,11 +18,11 @@ from app.models.users import UserModel
 class RBACService:
     def __init__(
         self,
-        role_repository: RoleRepository,
-        permission_repository: PermissionRepository,
-        user_repository: UserRepository,
-        user_role_repository: UserRoleRepository,
-        role_permission_repository: RolePermissionRepository,
+        role_repository: RoleRepositoryDep,
+        permission_repository: PermissionRepositoryDep,
+        user_repository: UserRepositoryDep,
+        user_role_repository: UserRoleRepositoryDep,
+        role_permission_repository: RolePermissionRepositoryDep,
     ):
         self._role_repo = role_repository
         self._permission_repo = permission_repository

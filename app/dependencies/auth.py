@@ -4,8 +4,8 @@ from fastapi import Cookie, Depends, HTTPException, status
 
 from app.core.config import settings
 from app.core.security import oauth2_scheme
-from app.dependencies.services import AuthServiceDep
 from app.models.users import UserModel
+from app.services.auth import AuthService
 
 AccessTokenDep = Annotated[str, Depends(oauth2_scheme)]
 
@@ -25,6 +25,8 @@ async def get_refresh_token_from_cookie(
 
 
 RefreshTokenDep = Annotated[str, Depends(get_refresh_token_from_cookie)]
+
+AuthServiceDep = Annotated[AuthService, Depends(AuthService)]
 
 
 async def get_current_user(

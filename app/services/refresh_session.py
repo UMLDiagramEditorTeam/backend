@@ -1,12 +1,14 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from app.dependencies.repositories import RefreshSessionRepository
+from app.dependencies.repositories import (
+    RefreshSessionRepositoryDep,
+)
 from app.models.refresh_sessions import RefreshSessionModel
 
 
 class RefreshSessionService:
-    def __init__(self, refresh_session_repository: RefreshSessionRepository):
+    def __init__(self, refresh_session_repository: RefreshSessionRepositoryDep):
         self._refresh_session_repository = refresh_session_repository
 
     async def create_session(

@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta, timezone
+from typing import Annotated
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Depends, Response, status
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import settings
-from app.dependencies.auth import CurrentUserDep, RefreshTokenDep
-from app.dependencies.services import AuthServiceDep
+from app.dependencies.auth import AuthServiceDep, CurrentUserDep, RefreshTokenDep
 from app.models.users import UserCreate, UserPublic
-from app.schemas.auth import LoginRequest, SuccessResponse, TokenResponse
+from app.schemas.auth import SuccessResponse, TokenResponse
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
@@ -51,13 +52,13 @@ async def register(
     status_code=status.HTTP_200_OK,
 )
 async def login(
-    login_request: LoginRequest,
+    auth_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     response: Response,
     auth_service: AuthServiceDep,
 ) -> TokenResponse:
     tokens = await auth_service.login(
-        email=login_request.email,
-        password=login_request.password,
+        email=auth_data.username,
+        password=auth_data.password,
     )
 
     set_refresh_cookie(response, tokens.refresh_token)
