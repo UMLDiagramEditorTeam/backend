@@ -1,7 +1,6 @@
-import json
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Query, status
 
 from app.dependencies.code_generation import CodeGenerationServiceDep
 from app.dependencies.routers import ProjectVerifiedDep, WindowVerifiedDep
@@ -90,16 +89,9 @@ async def generate_code(
     window: WindowVerifiedDep,
     language: TargetLanguage,
     code_generation_service: CodeGenerationServiceDep,
-) -> Response:
+) -> dict[str, str]:
 
-    result = await code_generation_service.generate(
+    return await code_generation_service.generate(
         window_id=window.id,
         language=language,
-    )
-
-    pretty_json = json.dumps(result, indent=4, ensure_ascii=False)
-
-    return Response(
-        content=pretty_json,
-        media_type='application/json',
     )
