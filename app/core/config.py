@@ -1,6 +1,8 @@
+from datetime import timedelta
 from functools import lru_cache
+from typing import Any
 
-from pydantic import Field
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -28,14 +30,25 @@ class DBSettings(BaseSettings):
 class AuthSettings(BaseSettings):
     jwt_private_key: str = 'your_secret_key_here'
     jwt_algorithm: str = 'HS256'
-    jwt_access_token_expire_seconds: int = 3600
-    jwt_refresh_token_expire_seconds: int = 604800
+    jwt_access_token_expire: timedelta = timedelta(hours=1)
+    jwt_refresh_token_expire: timedelta = timedelta(days=7)
 
     jwt_refresh_cookie_name: str = 'refresh_token'
     jwt_refresh_cookie_secure: bool = False
     jwt_refresh_cookie_samesite: str = 'lax'
     jwt_refresh_cookie_path: str = '/'
     jwt_refresh_cookie_domain: str | None = None
+
+    @field_validator(
+        'jwt_access_token_expire',
+        'jwt_refresh_token_expire',
+        mode='before',
+    )
+    @classmethod
+    def parse_expire_seconds(cls, value: Any) -> timedelta:
+        if isinstance(value, timedelta):
+            return value
+        return timedelta(seconds=int(value))
 
 
 class RBACSettings(BaseSettings):
@@ -54,9 +67,9 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    db: DBSettings = Field(default_factory=DBSettings)
-    auth: AuthSettings = Field(default_factory=AuthSettings)
-    rbac: RBACSettings = Field(default_factory=RBACSettings)
+    db: DBSettings
+    auth: AuthSettings
+    rbac: RBACSettings
 
     @property
     def database_url(self) -> str:

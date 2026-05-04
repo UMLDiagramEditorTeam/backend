@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
-from uuid import UUID
 
 from app.dependencies.repositories import (
     RefreshSessionRepositoryDep,
 )
-from app.models.refresh_sessions import RefreshSessionModel
+from app.models.refresh_sessions import RefreshSessionCreate, RefreshSessionModel
 
 
 class RefreshSessionService:
@@ -13,17 +12,10 @@ class RefreshSessionService:
 
     async def create_session(
         self,
-        user_id: UUID,
-        access_jti: str,
-        refresh_jti: str,
-        expires_at: datetime,
+        refresh_session_create: RefreshSessionCreate,
     ) -> RefreshSessionModel:
         refresh_session = RefreshSessionModel(
-            user_id=user_id,
-            access_jti=access_jti,
-            refresh_jti=refresh_jti,
-            expires_at=expires_at,
-            is_valid=True,
+            **refresh_session_create.model_dump(),
         )
         return await self._refresh_session_repository.save(refresh_session)
 

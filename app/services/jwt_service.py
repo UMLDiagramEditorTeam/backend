@@ -14,11 +14,11 @@ class TokenType:
 
 def _build_payload(
     user_id: UUID,
-    expires_in_seconds: int,
+    expires_in: timedelta,
     token_type: str,
 ) -> tuple[dict, str, datetime]:
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(seconds=expires_in_seconds)
+    expires_at = now + expires_in
     jti = uuid4().hex
 
     payload = {
@@ -34,7 +34,7 @@ def _build_payload(
 def create_access_token(user_id: UUID) -> tuple[str, str, datetime]:
     payload, jti, expires_at = _build_payload(
         user_id=user_id,
-        expires_in_seconds=settings.auth.jwt_access_token_expire_seconds,
+        expires_in=settings.auth.jwt_access_token_expire,
         token_type=TokenType.ACCESS,
     )
     token = jwt.encode(
@@ -48,7 +48,7 @@ def create_access_token(user_id: UUID) -> tuple[str, str, datetime]:
 def create_refresh_token(user_id: UUID) -> tuple[str, str, datetime]:
     payload, jti, expires_at = _build_payload(
         user_id=user_id,
-        expires_in_seconds=settings.auth.jwt_refresh_token_expire_seconds,
+        expires_in=settings.auth.jwt_refresh_token_expire,
         token_type=TokenType.REFRESH,
     )
     token = jwt.encode(

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response, status
@@ -22,8 +22,7 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
         path=settings.auth.jwt_refresh_cookie_path,
         expires=int(
             (
-                datetime.now(timezone.utc)
-                + timedelta(seconds=settings.auth.jwt_refresh_token_expire_seconds)
+                datetime.now(timezone.utc) + settings.auth.jwt_refresh_token_expire
             ).timestamp()
         ),
     )

@@ -26,3 +26,7 @@ class RefreshSessionModel(BaseModel, RefreshSessionBase, table=True):
     __tablename__ = 'refresh_session'
 
     user: 'UserModel' = Relationship(back_populates='refresh_sessions')
+
+
+class RefreshSessionCreate(RefreshSessionBase):
+    pass

@@ -6,9 +6,11 @@ from app.dependencies.repositories import (
     ClassRepositoryDep,
     InterfaceRepositoryDep,
     MethodRepositoryDep,
+    UserRepositoryDep,
 )
 from app.services.arguments import ArgumentService
 from app.services.attributes import AttributeService
+from app.services.auth import AuthService
 from app.services.classes import ClassService
 from app.services.interfaces import InterfaceService
 from app.services.methods import MethodService
@@ -29,6 +31,21 @@ RefreshSessionServiceDep = Annotated[
 
 RBACServiceDep = Annotated[RBACService, Depends(RBACService)]
 
+
+async def get_auth_service(
+    user_repository: UserRepositoryDep,
+    refresh_session_service: RefreshSessionServiceDep,
+    rbac_service: RBACServiceDep,
+) -> AuthService:
+    return AuthService(
+        user_repository=user_repository,
+        refresh_session_service=refresh_session_service,
+        rbac_service=rbac_service,
+    )
+
+
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
 ProjectServiceDep = Annotated[ProjectService, Depends(ProjectService)]
 
 WindowServiceDep = Annotated[WindowService, Depends(WindowService)]
@@ -46,14 +63,14 @@ async def get_class_service(
 ClassServiceDep = Annotated[ClassService, Depends(get_class_service)]
 
 
-async def get_interface_srvice(
+async def get_interface_service(
     interface_repository: InterfaceRepositoryDep,
     tile_service: TileServiceDep,
 ) -> InterfaceService:
     return InterfaceService(interface_repository, tile_service)
 
 
-InterfaceServiceDep = Annotated[InterfaceService, Depends(get_interface_srvice)]
+InterfaceServiceDep = Annotated[InterfaceService, Depends(get_interface_service)]
 
 ArgumentServiceDep = Annotated[ArgumentService, Depends(ArgumentService)]
 

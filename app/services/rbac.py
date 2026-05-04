@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 
+from app.core.config import settings
 from app.dependencies.repositories import (
     PermissionRepositoryDep,
     RolePermissionRepositoryDep,
@@ -140,7 +141,7 @@ class RBACService:
         scopes: set[str] = set()
 
         for role in user.roles:
-            if role.name == 'admin':
+            if role.name == settings.rbac.admin_role:
                 return {'*'}
 
             for permission in role.permissions:

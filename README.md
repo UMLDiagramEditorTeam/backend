@@ -26,8 +26,8 @@
 | DB_NAME | DB name | string | postgres |
 | JWT_PRIVATE_KEY | Secret key used to sign JWT tokens | string | your_secret_key_here |
 | JWT_ALGORITHM | JWT signing algorithm | string | HS256 |
-| JWT_ACCESS_TOKEN_EXPIRE_SECONDS | Access token lifetime in seconds | number | 3600 |
-| JWT_REFRESH_TOKEN_EXPIRE_SECONDS | Refresh token lifetime in seconds | number | 604800 |
+| JWT_ACCESS_TOKEN_EXPIRE | Access token lifetime in seconds | number | 3600 |
+| JWT_REFRESH_TOKEN_EXPIRE | Refresh token lifetime in seconds | number | 604800 |
 | RBAC_ADMIN_EMAIL | Default admin user email | string | admin@example.com |
 | RBAC_ADMIN_PASSWORD | Default admin user password | string | admin123456 |
 

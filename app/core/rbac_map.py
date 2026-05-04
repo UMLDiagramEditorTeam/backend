@@ -1,5 +1,7 @@
+from app.core.config import settings
+
 ROLE_SCOPES_MAP: dict[str, list[str]] = {
-    'public': [
+    settings.rbac.default_role: [
         'users:me',
         'projects:list_own',
         'projects:read_own',
@@ -37,7 +39,7 @@ ROLE_SCOPES_MAP: dict[str, list[str]] = {
         'relations:update_own',
         'relations:delete_own',
     ],
-    'admin': [
+    settings.rbac.admin_role: [
         'users:list',
         'users:read',
         'users:create',

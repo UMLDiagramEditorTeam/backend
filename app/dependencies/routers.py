@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 
+from app.core.config import settings
 from app.dependencies.auth import CurrentUserDep
 from app.dependencies.services import (
     AttributeServiceDep,
@@ -34,7 +35,7 @@ async def get_verified_project(
             if hasattr(current_user, 'roles')
             else set()
         )
-        if 'admin' not in user_roles:
+        if settings.rbac.admin_role not in user_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     return project
