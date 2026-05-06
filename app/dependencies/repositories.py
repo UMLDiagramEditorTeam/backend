@@ -9,12 +9,17 @@ from app.models import (
     ClassModel,
     InterfaceModel,
     MethodModel,
+    PermissionModel,
     ProjectModel,
+    RefreshSessionModel,
     RelationModel,
+    RoleModel,
     TileModel,
     UserModel,
     WindowModel,
 )
+from app.models.role_permissions import RolePermissionLink
+from app.models.user_roles import UserRoleLink
 from app.utils.repository import Repository
 
 
@@ -100,3 +105,54 @@ async def get_relation_repository(session: SessionDep):
 
 type RelationRepository = Repository[RelationModel]
 RelationRepositoryDep = Annotated[RelationRepository, Depends(get_relation_repository)]
+
+
+async def get_role_repository(session: SessionDep):
+    yield Repository[RoleModel](session)
+
+
+type RoleRepository = Repository[RoleModel]
+RoleRepositoryDep = Annotated[RoleRepository, Depends(get_role_repository)]
+
+
+async def get_permission_repository(session: SessionDep):
+    yield Repository[PermissionModel](session)
+
+
+type PermissionRepository = Repository[PermissionModel]
+PermissionRepositoryDep = Annotated[
+    PermissionRepository, Depends(get_permission_repository)
+]
+
+
+async def get_refresh_session_repository(session: SessionDep):
+    yield Repository[RefreshSessionModel](session)
+
+
+type RefreshSessionRepository = Repository[RefreshSessionModel]
+RefreshSessionRepositoryDep = Annotated[
+    RefreshSessionRepository,
+    Depends(get_refresh_session_repository),
+]
+
+
+async def get_user_role_repository(session: SessionDep):
+    yield Repository[UserRoleLink](session)
+
+
+type UserRoleRepository = Repository[UserRoleLink]
+UserRoleRepositoryDep = Annotated[
+    UserRoleRepository,
+    Depends(get_user_role_repository),
+]
+
+
+async def get_role_permission_repository(session: SessionDep):
+    yield Repository[RolePermissionLink](session)
+
+
+type RolePermissionRepository = Repository[RolePermissionLink]
+RolePermissionRepositoryDep = Annotated[
+    RolePermissionRepository,
+    Depends(get_role_permission_repository),
+]

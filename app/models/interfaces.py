@@ -40,8 +40,8 @@ class InterfaceModel(BaseModel, InterfaceBase, table=True):
     )
     methods: list['MethodModel'] = Relationship(back_populates='interface')
     relation_start: list['RelationModel'] = Relationship(
-        back_populates='start_interface',
-        sa_relationship_kwargs={'foreign_keys': 'RelationModel.start_interface_id'},
+        back_populates='begin_interface',
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.begin_interface_id'},
     )
     relation_end: list['RelationModel'] = Relationship(
         back_populates='end_interface',

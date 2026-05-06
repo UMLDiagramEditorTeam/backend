@@ -21,7 +21,7 @@ class ProjectService:
         return await self.__project_repository.fetch(**filters_dict)
 
     async def count_projects(
-        self, filters: ProjectFilters, user_id: UUID = None
+        self, filters: ProjectFilters, user_id: UUID | None = None
     ) -> int:
         filters_dict = filters.model_dump(exclude_unset=True)
         if user_id is not None:

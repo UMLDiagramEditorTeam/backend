@@ -1,15 +1,15 @@
 from typing import Optional
 from uuid import UUID
 
-from app.models import RelationType
+from app.models import RelationEndType, RelationKind
 from app.schemas.base import CommonListFilters
 
 
 class RelationFilters(CommonListFilters):
-    name: Optional[str] = None
-    start_type: Optional[RelationType] = None
-    end_type: Optional[RelationType] = None
-    start_class_id: Optional[UUID] = None
-    start_interface_id: Optional[UUID] = None
+    type: Optional[RelationKind] = None
+    begin_type: Optional[RelationEndType] = None
+    end_type: Optional[RelationEndType] = None
+    begin_class_id: Optional[UUID] = None
+    begin_interface_id: Optional[UUID] = None
     end_class_id: Optional[UUID] = None
     end_interface_id: Optional[UUID] = None

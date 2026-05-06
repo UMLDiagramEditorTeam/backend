@@ -10,22 +10,30 @@ if TYPE_CHECKING:
     from app.models import ClassModel, InterfaceModel, WindowModel
 
 
-class RelationType(str, Enum):
+class RelationKind(str, Enum):
+    RELATION = 'relation'
+    REALIZATION = 'realization'
+
+
+class RelationEndType(str, Enum):
     RELATION = 'relation'
     ONE = 'one'
     MANY = 'many'
-    ONE_AND_ONLY_ONE = 'one and ONLY one'
-    ONE_OR_MANY = 'one or many'
-    ZERO_OR_ONE = 'zero or one'
-    ZERO_OR_MANY = 'zero or many'
+    ONE_ONLY_ONE = 'one_only_one'
+    ONE_OR_MANY = 'one_or_many'
+    ZERO_OR_ONE = 'zero_or_one'
+    ZERO_OR_MANY = 'zero_or_many'
 
 
 class RelationBase(SQLModel):
     name: str = Field(max_length=100)
-    start_type: RelationType = Field(default=RelationType.RELATION)
-    end_type: RelationType = Field(default=RelationType.RELATION)
-    start_class_id: UUID | None = Field(default=None, foreign_key='class.id')
-    start_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
+    type: RelationKind = Field(default=RelationKind.RELATION)
+
+    begin_type: RelationEndType = Field(default=RelationEndType.RELATION)
+    end_type: RelationEndType = Field(default=RelationEndType.RELATION)
+
+    begin_class_id: UUID | None = Field(default=None, foreign_key='class.id')
+    begin_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
     end_class_id: UUID | None = Field(default=None, foreign_key='class.id')
     end_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
 
@@ -45,13 +53,13 @@ class RelationUpdate(RelationBase):
 class RelationModel(RelationPublic, table=True):
     __tablename__ = 'relation'
 
-    start_class: 'ClassModel' = Relationship(
+    begin_class: 'ClassModel' = Relationship(
         back_populates='relations_start',
-        sa_relationship_kwargs={'foreign_keys': 'RelationModel.start_class_id'},
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.begin_class_id'},
     )
-    start_interface: 'InterfaceModel' = Relationship(
+    begin_interface: 'InterfaceModel' = Relationship(
         back_populates='relation_start',
-        sa_relationship_kwargs={'foreign_keys': 'RelationModel.start_interface_id'},
+        sa_relationship_kwargs={'foreign_keys': 'RelationModel.begin_interface_id'},
     )
     end_class: 'ClassModel' = Relationship(
         back_populates='relations_end',
@@ -66,10 +74,10 @@ class RelationModel(RelationPublic, table=True):
     __table_args__ = (
         CheckConstraint(
             (
-                '(start_class_id IS NOT NULL AND start_interface_id IS NULL) '
-                'OR (start_class_id IS NULL AND start_interface_id IS NOT NULL)'
+                '(begin_class_id IS NOT NULL AND begin_interface_id IS NULL) '
+                'OR (begin_class_id IS NULL AND begin_interface_id IS NOT NULL)'
             ),
-            name='single_start_entity_check',
+            name='single_begin_entity_check',
         ),
         CheckConstraint(
             (
@@ -80,8 +88,8 @@ class RelationModel(RelationPublic, table=True):
         ),
         UniqueConstraint(
             'window_id',
-            'start_class_id',
-            'start_interface_id',
+            'begin_class_id',
+            'begin_interface_id',
             'end_class_id',
             'end_interface_id',
             name='uq_relation_unique_pair',

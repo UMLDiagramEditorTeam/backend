@@ -87,6 +87,11 @@ class Repository[Model: BaseModel]:
         await self.__session.commit()
         return instance
 
+    async def delete_instance(self, instance: Model) -> Model:
+        await self.__session.delete(instance)
+        await self.__session.commit()
+        return instance
+
     async def update(self, pk: UUID, updates: PydanticBaseModel) -> Optional[Model]:
         instance = await self.get(pk)
         if instance is None:

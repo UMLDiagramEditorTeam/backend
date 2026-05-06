@@ -1,14 +1,14 @@
 from typing import Sequence
 
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import computed_field
+from pydantic import Field, computed_field
 
 from app.models import BaseModel
 
 
 class CommonListFilters(PydanticBaseModel):
-    page: int
-    limit: int
+    page: int = Field(default=1, ge=1)
+    limit: int = Field(default=20, ge=1, le=100)
 
     @computed_field
     @property

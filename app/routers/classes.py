@@ -1,5 +1,6 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Query, status
-from typing_extensions import Annotated
 
 from app.dependencies.routers import ClassVerifiedDep, WindowVerifiedDep
 from app.dependencies.services import ClassServiceDep
@@ -9,9 +10,7 @@ from app.schemas.classes import ClassFilters
 
 # ruff: noqa: FAST003 - параметр пути обрабатывается через зависимость
 
-router = APIRouter(
-    prefix='/projects/{project_id}/windows/{window_id}/classes', tags=['Classes']
-)
+router = APIRouter(prefix='/windows/{window_id}/classes', tags=['Classes'])
 
 
 @router.get(
@@ -28,7 +27,10 @@ async def get_classes(
     total = await class_service.count_classes(window.id, filters)
 
     return PaginatedResponse(
-        data=classes, total=total, page=filters.page, limit=filters.limit
+        data=classes,
+        total=total,
+        page=filters.page,
+        limit=filters.limit,
     )
 
 
@@ -74,6 +76,7 @@ async def update_class(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_class(
-    class_obj: ClassVerifiedDep, class_service: ClassServiceDep
+    class_obj: ClassVerifiedDep,
+    class_service: ClassServiceDep,
 ) -> None:
     await class_service.delete_class(class_obj.id)
