@@ -2,7 +2,7 @@ from enum import Enum
 from uuid import UUID
 
 from app.services.uml_graph_preloader import UMLGraphPreloaderService
-from app.utils.code_generater import JavaCodeGenerator, PythonCodeGenerator
+from app.utils.code_generator import JavaCodeGenerator, PythonCodeGenerator
 from app.utils.uml_analyzer import UMLGraphAnalyzer
 
 

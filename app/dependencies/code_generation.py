@@ -5,7 +5,7 @@ from fastapi import Depends
 from app.services.code_generation import CodeGenerationService, GeneratorFactory
 from app.services.uml_graph_preloader import UMLGraphPreloaderService
 from app.templates.templates_env import jinja_env
-from app.utils.code_generater import JavaCodeGenerator, PythonCodeGenerator
+from app.utils.code_generator import JavaCodeGenerator, PythonCodeGenerator
 
 UMLGraphPreloaderServiceDep = Annotated[
     UMLGraphPreloaderService, Depends(UMLGraphPreloaderService)

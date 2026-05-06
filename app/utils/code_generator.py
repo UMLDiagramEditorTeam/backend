@@ -83,7 +83,7 @@ class JavaCodeGenerator(BaseCodeGenerator):
         return mapping[modifier]
 
 
-class PythonCodeGenerator:
+class PythonCodeGenerator(BaseCodeGenerator):
     extension = 'py'
 
     def __init__(self, env: Environment):
