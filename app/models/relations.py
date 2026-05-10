@@ -58,7 +58,7 @@ class RelationModel(RelationPublic, table=True):
         sa_relationship_kwargs={'foreign_keys': 'RelationModel.begin_class_id'},
     )
     begin_interface: 'InterfaceModel' = Relationship(
-        back_populates='relation_start',
+        back_populates='relations_start',
         sa_relationship_kwargs={'foreign_keys': 'RelationModel.begin_interface_id'},
     )
     end_class: 'ClassModel' = Relationship(
@@ -66,7 +66,7 @@ class RelationModel(RelationPublic, table=True):
         sa_relationship_kwargs={'foreign_keys': 'RelationModel.end_class_id'},
     )
     end_interface: 'InterfaceModel' = Relationship(
-        back_populates='relation_end',
+        back_populates='relations_end',
         sa_relationship_kwargs={'foreign_keys': 'RelationModel.end_interface_id'},
     )
     window: 'WindowModel' = Relationship(back_populates='relations')

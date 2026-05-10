@@ -76,8 +76,8 @@ class UMLGraphPreloaderService:
                 relations=[
                     'methods',
                     'methods.arguments',
-                    'relation_start',
-                    'relation_end',
+                    'relations_start',
+                    'relations_end',
                 ],
             )
         )

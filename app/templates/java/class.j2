@@ -1,5 +1,5 @@
-{{ modifier(class_.access_modifier) }} {% if class_.is_abstract %}abstract {% endif %}class {{ class_.name }}{% if extends %}extends {{ extends.name }}{% endif %}{% if implements %}
-implements {{ implements | map(attribute='name') | join(', ') }}{% endif %}
+{{ modifier(class_.access_modifier) }} {% if class_.is_abstract %}abstract {% endif %}class {{ class_.name }}{% if extends %} extends {{ extends.name }}{% endif %}
+{% if implements %} implements {{ implements | map(attribute='name') | join(', ') }}{% endif %}
 {
 {% for attribute in class_.attributes %}
     {{ modifier(attribute.access_modifier) }} {% if attribute.is_static %}static {% endif %}{% if attribute.is_final %}final {% endif %}{{ attribute.type }} {{ attribute.name }}{% if attribute.default_value %} = {{ attribute.default_value }}{% endif %};

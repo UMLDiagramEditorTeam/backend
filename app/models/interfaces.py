@@ -39,11 +39,11 @@ class InterfaceModel(BaseModel, InterfaceBase, table=True):
         sa_relationship_kwargs={'lazy': 'selectin'},
     )
     methods: list['MethodModel'] = Relationship(back_populates='interface')
-    relation_start: list['RelationModel'] = Relationship(
+    relations_start: list['RelationModel'] = Relationship(
         back_populates='begin_interface',
         sa_relationship_kwargs={'foreign_keys': 'RelationModel.begin_interface_id'},
     )
-    relation_end: list['RelationModel'] = Relationship(
+    relations_end: list['RelationModel'] = Relationship(
         back_populates='end_interface',
         sa_relationship_kwargs={'foreign_keys': 'RelationModel.end_interface_id'},
     )

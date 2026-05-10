@@ -1,4 +1,4 @@
-public interface {{ interface.name }} {% if extends %}extends {{ extends | map(attribute='name') | join(', ') }}{% endif %}
+public interface {{ interface.name }} {% if extends %} extends {{ extends | map(attribute='name') | join(', ') }}{% endif %}
 {
 {% for method in interface.methods %}
     {{ method.return_type }} {{ method.name }}(

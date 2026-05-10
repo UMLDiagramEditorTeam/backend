@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Dict, Sequence
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, computed_field
@@ -26,3 +26,17 @@ class PaginatedResponse[Model: BaseModel](PydanticBaseModel):
     @property
     def total_pages(self) -> int:
         return (self.total + self.limit - 1) // self.limit
+
+
+class CodeGenerationResponse(PydanticBaseModel):
+    files: Dict[str, str]
+
+    @computed_field
+    @property
+    def files_count(self) -> int:
+        return len(self.files)
+
+    @computed_field
+    @property
+    def summary(self) -> str:
+        return f'Generated {len(self.files)} file(s): {", ".join(self.files.keys())}'

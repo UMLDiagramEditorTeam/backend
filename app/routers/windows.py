@@ -6,11 +6,13 @@ from app.dependencies.code_generation import CodeGenerationServiceDep
 from app.dependencies.routers import ProjectVerifiedDep, WindowVerifiedDep
 from app.dependencies.services import WindowServiceDep
 from app.models.windows import WindowCreate, WindowPublic, WindowUpdate
+from app.schemas import CodeGenerationResponse
 from app.schemas.base import PaginatedResponse
 from app.schemas.windows import WindowFilters
 from app.services.code_generation import TargetLanguage
 
 router = APIRouter(prefix='/projects/{project_id}/windows', tags=['Windows'])
+
 
 # ruff: noqa: FAST003 - параметр пути обрабатывается через зависимость
 
@@ -82,16 +84,16 @@ async def delete_window(
 
 
 @router.post(
-    '/{window_id}/{language}',
+    '/{window_id}/generate_code',
     status_code=status.HTTP_200_OK,
 )
 async def generate_code(
     window: WindowVerifiedDep,
-    language: TargetLanguage,
     code_generation_service: CodeGenerationServiceDep,
-) -> dict[str, str]:
-
-    return await code_generation_service.generate(
+    language: Annotated[TargetLanguage, Query()] = TargetLanguage.JAVA,
+) -> CodeGenerationResponse:
+    resalt = await code_generation_service.generate(
         window_id=window.id,
         language=language,
     )
+    return CodeGenerationResponse(files=resalt)

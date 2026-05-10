@@ -76,9 +76,10 @@ class InterfaceService:
                 detail='Interface not found',
             )
 
+        tile = interface_update.tile
         interface_data = InterfaceModel(**interface_update.model_dump(exclude={'tile'}))
 
-        await self.__tile_service.update_tile(interface.tile_id, interface_update.tile)
+        await self.__tile_service.update_tile(interface.tile_id, tile)
         return await self.__interface_repository.update(interface_id, interface_data)
 
     async def delete_interface(self, interface_id: UUID) -> Optional[InterfaceModel]:
