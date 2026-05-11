@@ -1,13 +1,24 @@
+from datetime import datetime, timezone
+from secrets import token_urlsafe
 from uuid import UUID
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 
 from app.core.config import settings
 from app.dependencies.repositories import UserRepositoryDep
-from app.dependencies.services import RBACServiceDep, RefreshSessionServiceDep
+from app.dependencies.services import (
+    EmailNotificationServiceDep,
+    EmailServiceDep,
+    RBACServiceDep,
+    RefreshSessionServiceDep,
+)
+from app.models.email_notifications import (
+    EmailNotificationAction,
+    EmailNotificationCreate,
+)
 from app.models.refresh_sessions import RefreshSessionCreate
-from app.models.users import UserCreate, UserModel
-from app.schemas.auth import TokenPair
+from app.models.users import UserCreate, UserModel, UserStatus
+from app.schemas.auth import PasswordChangeRequest, TokenPair
 from app.services.hasher import hash_password, verify_password
 from app.services.jwt_service import (
     create_access_token,
@@ -23,10 +34,14 @@ class AuthService:
         user_repository: UserRepositoryDep,
         refresh_session_service: RefreshSessionServiceDep,
         rbac_service: RBACServiceDep,
+        email_notification_service: EmailNotificationServiceDep,
+        email_service: EmailServiceDep,
     ):
         self._user_repository = user_repository
         self._refresh_session_service = refresh_session_service
         self._rbac_service = rbac_service
+        self._email_notification_service = email_notification_service
+        self._email_service = email_service
 
     async def get_user_by_email(self, email: str) -> UserModel | None:
         users = await self._user_repository.fetch(email=email)
@@ -34,7 +49,11 @@ class AuthService:
             return None
         return users[0]
 
-    async def register(self, user_create: UserCreate) -> UserModel:
+    async def register(
+        self,
+        user_create: UserCreate,
+        background_tasks: BackgroundTasks,
+    ) -> UserModel:
         existing_user = await self.get_user_by_email(user_create.email)
         if existing_user is not None:
             raise HTTPException(
@@ -50,13 +69,45 @@ class AuthService:
                 **user_dump,
                 password_hash=hash_password(password),
                 is_active=True,
+                status=UserStatus.CREATED,
             )
         )
 
-        return await self._rbac_service.assign_role_to_user(
+        created_user = await self._rbac_service.assign_role_to_user(
             created_user,
             settings.rbac.default_role,
         )
+
+        code = await self._create_email_notification(
+            user=created_user,
+            action=EmailNotificationAction.ACCOUNT_CONFIRMATION,
+        )
+        self._email_service.send_account_confirmation(
+            background_tasks=background_tasks,
+            user=created_user,
+            code=code,
+        )
+
+        return created_user
+
+    async def confirm_account(self, user_id: UUID, code: str) -> UserModel:
+        user = await self._user_repository.get(user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='User not found',
+            )
+
+        notification = await self._email_notification_service.get_valid_notification(
+            user_id=user_id,
+            code=code,
+            action=EmailNotificationAction.ACCOUNT_CONFIRMATION,
+        )
+
+        user.status = UserStatus.CONFIRMED
+        await self._user_repository.save(user)
+        await self._email_notification_service.mark_as_used(notification)
+        return user
 
     async def authenticate_user(self, email: str, password: str) -> UserModel:
         user = await self.get_user_by_email(email)
@@ -70,6 +121,12 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='User is inactive',
+            )
+
+        if user.status != UserStatus.CONFIRMED:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='User account is not confirmed',
             )
 
         return user
@@ -99,6 +156,12 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='User is inactive',
+            )
+
+        if user.status != UserStatus.CONFIRMED:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='User account is not confirmed',
             )
 
         return user
@@ -140,10 +203,10 @@ class AuthService:
             )
 
         user = await self._user_repository.get(UUID(user_id))
-        if user is None or not user.is_active:
+        if user is None or not user.is_active or user.status != UserStatus.CONFIRMED:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='User not found or inactive',
+                detail='User not found, inactive or not confirmed',
             )
 
         await self._refresh_session_service.invalidate_session(refresh_session)
@@ -164,6 +227,50 @@ class AuthService:
             refresh_jti
         )
 
+    async def request_password_reset(
+        self,
+        email: str,
+        background_tasks: BackgroundTasks,
+    ) -> None:
+        user = await self.get_user_by_email(email)
+        if user is None:
+            return
+
+        code = await self._create_email_notification(
+            user=user,
+            action=EmailNotificationAction.PASSWORD_RESET,
+        )
+        self._email_service.send_password_reset(
+            background_tasks=background_tasks,
+            user=user,
+            code=code,
+        )
+
+    async def change_password(self, request: PasswordChangeRequest) -> None:
+        if request.password != request.password_confirm:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Passwords do not match',
+            )
+
+        user = await self._user_repository.get(request.user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='User not found',
+            )
+
+        notification = await self._email_notification_service.get_valid_notification(
+            user_id=request.user_id,
+            code=request.code,
+            action=EmailNotificationAction.PASSWORD_RESET,
+        )
+
+        user.password_hash = hash_password(request.password)
+        await self._user_repository.save(user)
+        await self._email_notification_service.mark_as_used(notification)
+        await self._refresh_session_service.invalidate_sessions_by_user_id(user.id)
+
     async def _issue_tokens(self, user: UserModel) -> TokenPair:
         access_token, access_jti, _ = create_access_token(user.id)
         refresh_token, refresh_jti, refresh_expires_at = create_refresh_token(user.id)
@@ -181,3 +288,24 @@ class AuthService:
             access_token=access_token,
             refresh_token=refresh_token,
         )
+
+    async def _create_email_notification(
+        self,
+        user: UserModel,
+        action: EmailNotificationAction,
+    ) -> str:
+        expire = (
+            settings.auth.account_confirmation_token_expire
+            if action == EmailNotificationAction.ACCOUNT_CONFIRMATION
+            else settings.auth.password_reset_token_expire
+        )
+        code = token_urlsafe(32)
+        await self._email_notification_service.create_notification(
+            EmailNotificationCreate(
+                user_id=user.id,
+                action=action,
+                code=code,
+                expired_at=datetime.now(timezone.utc) + expire,
+            )
+        )
+        return code

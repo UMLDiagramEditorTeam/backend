@@ -2,7 +2,7 @@ from app.core.config import settings
 from app.core.rbac_map import ROLE_SCOPES_MAP
 from app.dependencies.repositories import RoleRepository, UserRepository
 from app.models.permissions import PermissionModel
-from app.models.users import UserModel
+from app.models.users import UserModel, UserStatus
 from app.services.hasher import hash_password
 from app.services.rbac import RBACService
 
@@ -62,8 +62,12 @@ class BootstrapService:
                     email=settings.rbac.admin_email,
                     password_hash=hash_password(settings.rbac.admin_password),
                     is_active=True,
+                    status=UserStatus.CONFIRMED,
                 )
             )
+        elif admin_user.status != UserStatus.CONFIRMED:
+            admin_user.status = UserStatus.CONFIRMED
+            await self._user_repository.save(admin_user)
 
         await self._rbac_service.assign_role_to_user(
             admin_user,

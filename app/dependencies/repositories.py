@@ -7,6 +7,7 @@ from app.models import (
     ArgumentModel,
     AttributeModel,
     ClassModel,
+    EmailNotificationModel,
     InterfaceModel,
     MethodModel,
     PermissionModel,
@@ -133,6 +134,17 @@ type RefreshSessionRepository = Repository[RefreshSessionModel]
 RefreshSessionRepositoryDep = Annotated[
     RefreshSessionRepository,
     Depends(get_refresh_session_repository),
+]
+
+
+async def get_email_notification_repository(session: SessionDep):
+    yield Repository[EmailNotificationModel](session)
+
+
+type EmailNotificationRepository = Repository[EmailNotificationModel]
+EmailNotificationRepositoryDep = Annotated[
+    EmailNotificationRepository,
+    Depends(get_email_notification_repository),
 ]
 
 

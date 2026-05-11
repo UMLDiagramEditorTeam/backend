@@ -38,10 +38,14 @@ class AuthSettings(BaseSettings):
     jwt_refresh_cookie_samesite: str = 'lax'
     jwt_refresh_cookie_path: str = '/'
     jwt_refresh_cookie_domain: str | None = None
+    account_confirmation_token_expire: timedelta = timedelta(days=1)
+    password_reset_token_expire: timedelta = timedelta(hours=1)
 
     @field_validator(
         'jwt_access_token_expire',
         'jwt_refresh_token_expire',
+        'account_confirmation_token_expire',
+        'password_reset_token_expire',
         mode='before',
     )
     @classmethod
@@ -57,6 +61,27 @@ class RBACSettings(BaseSettings):
     admin_name: str = 'admin'
     admin_role: str = 'admin'
     default_role: str = 'public'
+
+
+class SMTPSettings(BaseSettings):
+    username: str = ''
+    password: str = ''
+    host: str = 'smtp.example.com'
+    port: int = 587
+    use_credentials: bool = True
+    starttls: bool = True
+    ssl_tls: bool = False
+    validate_certs: bool = True
+
+
+class EmailSettings(BaseSettings):
+    from_email: str = 'noreply@example.com'
+    from_name: str = 'UML Diagram Editor'
+    template_folder: str = 'app/templates/email'
+    account_confirmation_subject: str = 'Account confirmation'
+    password_reset_subject: str = 'Password reset confirmation'
+    account_confirmation_url: str = 'http://localhost:3000/auth/confirm'
+    password_reset_url: str = 'http://localhost:3000/auth/password/change'
 
 
 class Settings(BaseSettings):
