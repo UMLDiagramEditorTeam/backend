@@ -1,8 +1,9 @@
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, Security, status
+from fastapi import APIRouter, Query, Security, status
 
+from app.core.errors import NotFoundError
 from app.dependencies.rbac import CurrentUserWithScopesDep
 from app.dependencies.services import RBACServiceDep, UserServiceDep
 from app.models.users import UserCreate, UserPublic, UserUpdate
@@ -46,7 +47,7 @@ async def create_user(
     user_create: UserCreate,
     user_service: UserServiceDep,
 ) -> UserPublic:
-    return await user_service.create_user(user_create)
+    return await user_service.create_user(user_create)  # type: ignore[return-value]
 
 
 @router.get(
@@ -107,9 +108,6 @@ async def update_user_roles(
 ) -> UserPublic:
     user = await user_service.get_user(user_id)
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='User not found',
-        )
+        raise NotFoundError()
 
     return await rbac_service.replace_user_roles(user, request.roles)
