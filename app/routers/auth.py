@@ -43,7 +43,7 @@ def delete_refresh_cookie(response: Response) -> None:
 
 @router.post(
     '/register',
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_201_CREATED,
 )
 async def register(
     user_create: UserCreate,

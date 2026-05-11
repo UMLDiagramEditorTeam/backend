@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy.dialects.postgresql import TIMESTAMP
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship
 
 from app.models.base import BaseModel
 
@@ -17,7 +17,7 @@ class EmailNotificationAction(StrEnum):
     PASSWORD_RESET = 'PASSWORD_RESET'
 
 
-class EmailNotificationBase(SQLModel):
+class EmailNotificationBase(BaseModel):
     user_id: UUID = Field(foreign_key='user.id', nullable=False, index=True)
     action: EmailNotificationAction = Field(nullable=False, index=True)
     code: str = Field(max_length=64, index=True)
@@ -28,7 +28,7 @@ class EmailNotificationBase(SQLModel):
     )
 
 
-class EmailNotificationModel(BaseModel, EmailNotificationBase, table=True):
+class EmailNotificationModel(EmailNotificationBase, table=True):
     __tablename__ = 'email_notification'
 
     user: 'UserModel' = Relationship(back_populates='email_notifications')
