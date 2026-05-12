@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from jinja2 import Environment
 
-from app.models import AccessModifier, ClassModel, InterfaceModel
+from app.models import AccessModifier, ClassModel, InterfaceModel, MethodModel
 
 
 class BaseCodeGenerator(ABC):
@@ -15,6 +15,7 @@ class BaseCodeGenerator(ABC):
         *,
         extends: ClassModel | None,
         implements: list[InterfaceModel],
+        override: list[MethodModel],
     ) -> str:
         pass
 
@@ -40,8 +41,8 @@ class JavaCodeGenerator(BaseCodeGenerator):
         *,
         extends: ClassModel | None,
         implements: list[InterfaceModel],
+        override: list[MethodModel],
     ) -> str:
-
         template = self._env.get_template('java/class.j2')
 
         return template.render(
@@ -49,6 +50,7 @@ class JavaCodeGenerator(BaseCodeGenerator):
             extends=extends,
             implements=implements,
             modifier=self._map_modifier,
+            override=override,
         )
 
     def generate_interface(
@@ -57,7 +59,6 @@ class JavaCodeGenerator(BaseCodeGenerator):
         *,
         extends: list[InterfaceModel],
     ) -> str:
-
         template = self._env.get_template('java/interface.j2')
 
         return template.render(
@@ -95,6 +96,7 @@ class PythonCodeGenerator(BaseCodeGenerator):
         *,
         extends: ClassModel | None,
         implements: list[InterfaceModel],
+        override: list[MethodModel],
     ) -> str:
 
         template = self._env.get_template('python/class.j2')
@@ -105,6 +107,7 @@ class PythonCodeGenerator(BaseCodeGenerator):
             implements=implements,
             map_modifier=self._map_attribute_name,
             has_abstract=self._has_abstract_methods(class_model),
+            override=override,
         )
 
     def generate_interface(

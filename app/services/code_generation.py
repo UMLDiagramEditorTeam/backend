@@ -64,6 +64,7 @@ class CodeGenerationService:
                 class_model,
                 extends=relations.extends,
                 implements=relations.implements,
+                override=relations.implemented_methods,
             )
 
             filename = f'{class_model.name}.{generator.extension}'

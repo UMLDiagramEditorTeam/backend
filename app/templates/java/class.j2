@@ -12,4 +12,13 @@
         {%- endfor -%}
     ){% if method.is_abstract %};{% else %}{}{% endif %}
 {% endfor %}
+{% for method in override %}
+    @Override
+    {{ modifier(method.access_modifier) }} {% if method.is_static %}static {% endif %}{% if method.is_abstract %}abstract {% endif %}{{ method.return_type }} {{ method.name }}(
+        {%- for arg in method.arguments -%}
+            {{ arg.type }} {{ arg.name }}
+            {%- if not loop.last %}, {% endif %}
+        {%- endfor -%}
+    ){% if method.is_abstract %};{% else %}{}{% endif %}
+{% endfor %}
 }
