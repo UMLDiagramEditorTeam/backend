@@ -65,51 +65,11 @@ class UMLGraphAnalyzer:
         return result
 
     def get_interface_methods(
-        self, class_model: ClassModel, implemented: list[InterfaceModel]
+        self, implemented: list[InterfaceModel]
     ) -> list[MethodModel]:
-        result: list[MethodModel] = []
-
         if len(implemented) == 0:
-            return result
-
-        class_methods: dict[str, MethodModel] = {
-            method.name: method for method in class_model.methods
-        }
-
-        for interface in implemented:
-            if interface.methods is None:
-                continue
-
-            for interface_method in interface.methods:
-                if class_methods.get(interface_method.name) is None:
-                    result.append(interface_method)
-                    continue
-                class_method_arguments = tuple(
-                    (arg.name, arg.type, arg.order_num)
-                    for arg in class_methods.get(interface_method.name).arguments
-                )
-                interface_method_arguments = tuple(
-                    (arg.name, arg.type, arg.order_num)
-                    for arg in interface_method.arguments
-                )
-
-                if len(class_method_arguments) != len(interface_method_arguments):
-                    result.append(interface_method)
-                    continue
-
-                for i in range(len(class_method_arguments)):
-                    for j in range(3):
-                        if (
-                            class_method_arguments[i][j]
-                            != interface_method_arguments[i][j]
-                        ):
-                            break
-                raise Exception()
-                # TODO: add raise Validation error
-
-                result.append(interface_method)
-
-        return result
+            return []
+        return [method for interface in implemented for method in interface.methods]
 
     def analyze_class(
         self,
@@ -119,7 +79,7 @@ class UMLGraphAnalyzer:
         return ClassRelations(
             extends=self.get_parent_class(class_model),
             implements=implements,
-            implemented_methods=self.get_interface_methods(class_model, implements),
+            implemented_methods=self.get_interface_methods(implements),
         )
 
     def analyze_interface(
