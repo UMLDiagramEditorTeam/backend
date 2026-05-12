@@ -18,7 +18,6 @@ class MethodBase(SQLModel):
     is_final: bool = Field(default=False)
     is_static: bool = Field(default=False)
     is_abstract: bool = Field(default=False)
-    is_inherited: bool = Field(default=False)
 
 
 class MethodPublic(BaseModel, MethodBase):
