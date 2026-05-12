@@ -1,9 +1,8 @@
 from collections.abc import Iterable
 from uuid import UUID
 
-from fastapi import HTTPException, status
-
 from app.core.config import settings
+from app.core.errors import NotFoundError
 from app.dependencies.repositories import (
     PermissionRepositoryDep,
     RolePermissionRepositoryDep,
@@ -68,10 +67,7 @@ class RBACService:
     async def assign_role_to_user(self, user: UserModel, role_name: str) -> UserModel:
         role = await self.get_role_by_name(role_name)
         if role is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f'Role "{role_name}" not found',
-            )
+            raise NotFoundError()
 
         links = await self._user_role_repo.fetch(
             user_id=user.id,
@@ -98,10 +94,7 @@ class RBACService:
         for role_name in role_names:
             role = await self.get_role_by_name(role_name)
             if role is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f'Role "{role_name}" not found',
-                )
+                raise NotFoundError()
             roles.append(role)
 
         existing_links = await self._user_role_repo.fetch(user_id=user.id)

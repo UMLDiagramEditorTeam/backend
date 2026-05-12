@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import Cookie, Depends
 
 from app.core.config import settings
+from app.core.errors import UnauthorizedError
 from app.core.security import oauth2_scheme
 from app.models.users import UserModel
 from app.services.auth import AuthService
@@ -17,10 +18,7 @@ async def get_refresh_token_from_cookie(
     ] = None,
 ) -> str:
     if refresh_token is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Refresh token is missing',
-        )
+        raise UnauthorizedError(message='Отсутствует refresh-токен')
     return refresh_token
 
 
