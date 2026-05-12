@@ -95,6 +95,8 @@ class Settings(BaseSettings):
     db: DBSettings
     auth: AuthSettings
     rbac: RBACSettings
+    email: EmailSettings
+    smtp: SMTPSettings
 
     @property
     def database_url(self) -> str:

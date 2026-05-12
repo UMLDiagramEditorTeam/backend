@@ -33,7 +33,7 @@ class ClassCreate(ClassBase):
     tile: TileCreate | None = None
 
 
-class ClassUpdate(SQLModel):
+class ClassUpdate(ClassBase):
     tile: TileUpdate
 
 

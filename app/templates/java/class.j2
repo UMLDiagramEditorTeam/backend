@@ -1,0 +1,24 @@
+{{ modifier(class_.access_modifier) }} {% if class_.is_abstract %}abstract {% endif %}class {{ class_.name }}{% if extends %} extends {{ extends.name }}{% endif %}
+{% if implements %} implements {{ implements | map(attribute='name') | join(', ') }}{% endif %}
+{
+{% for attribute in class_.attributes %}
+    {{ modifier(attribute.access_modifier) }} {% if attribute.is_static %}static {% endif %}{% if attribute.is_final %}final {% endif %}{{ attribute.type }} {{ attribute.name }}{% if attribute.default_value %} = {{ attribute.default_value }}{% endif %};
+{% endfor %}
+{% for method in class_.methods %}
+    {{ modifier(method.access_modifier) }} {% if method.is_static %}static {% endif %}{% if method.is_abstract %}abstract {% endif %}{{ method.return_type }} {{ method.name }}(
+        {%- for arg in method.arguments -%}
+            {{ arg.type }} {{ arg.name }}
+            {%- if not loop.last %}, {% endif %}
+        {%- endfor -%}
+    ){% if method.is_abstract %};{% else %}{}{% endif %}
+{% endfor %}
+{% for method in override %}
+    @Override
+    {{ modifier(method.access_modifier) }} {% if method.is_static %}static {% endif %}{% if method.is_abstract %}abstract {% endif %}{{ method.return_type }} {{ method.name }}(
+        {%- for arg in method.arguments -%}
+            {{ arg.type }} {{ arg.name }}
+            {%- if not loop.last %}, {% endif %}
+        {%- endfor -%}
+    ){% if method.is_abstract %};{% else %}{}{% endif %}
+{% endfor %}
+}

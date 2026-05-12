@@ -55,4 +55,35 @@ class MethodModel(BaseModel, MethodBase, table=True):
         ),
         UniqueConstraint('class_id', 'name', name='uq_method_class_name'),
         UniqueConstraint('interface_id', 'name', name='uq_method_interface_name'),
+        # Логические конфликты
+        CheckConstraint(
+            'NOT (is_final = TRUE AND is_abstract = TRUE)',
+            name='final_abstract_conflict',
+        ),
+        CheckConstraint(
+            'NOT (is_static = TRUE AND is_abstract = TRUE)',
+            name='static_abstract_conflict',
+        ),
+        # Ограничения для интерфейсов
+        CheckConstraint(
+            """
+            (interface_id IS NULL) OR (
+            interface_id IS NOT NULL AND
+            (access_modifier = 'PUBLIC' OR access_modifier IS NULL)
+            AND is_final = FALSE
+            AND is_static = FALSE
+            )
+            """,
+            name='interface_method_constraints',
+        ),
+        # Ограничения для абстрактных методов в классах
+        CheckConstraint(
+            """
+            (class_id IS NULL OR is_abstract = FALSE) OR (
+            class_id IS NOT NULL AND is_abstract = TRUE
+            AND access_modifier IN ('PUBLIC', 'PROTECTED', NULL)
+            )
+            """,
+            name='abstract_class_method_rules',
+        ),
     )
