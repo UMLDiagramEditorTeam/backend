@@ -2,9 +2,16 @@ from datetime import datetime, timezone
 from secrets import token_urlsafe
 from uuid import UUID
 
-from fastapi import BackgroundTasks, HTTPException, status
+from fastapi import BackgroundTasks
 
 from app.core.config import settings
+from app.core.errors import (
+    BadRequestError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    UnauthorizedError,
+)
 from app.dependencies.repositories import UserRepositoryDep
 from app.dependencies.services import (
     EmailNotificationServiceDep,
@@ -56,10 +63,7 @@ class AuthService:
     ) -> UserModel:
         existing_user = await self.get_user_by_email(user_create.email)
         if existing_user is not None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail='User with this email already exists',
-            )
+            raise ConflictError('Пользователь с таким email уже существует')
 
         user_dump = user_create.model_dump()
         password = str(user_dump.pop('password'))
@@ -93,10 +97,7 @@ class AuthService:
     async def confirm_account(self, user_id: UUID, code: str) -> UserModel:
         user = await self._user_repository.get(user_id)
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='User not found',
-            )
+            raise NotFoundError()
 
         notification = await self._email_notification_service.get_valid_notification(
             user_id=user_id,
@@ -112,22 +113,13 @@ class AuthService:
     async def authenticate_user(self, email: str, password: str) -> UserModel:
         user = await self.get_user_by_email(email)
         if user is None or not verify_password(password, user.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid credentials',
-            )
+            raise UnauthorizedError('Неверно введена почта или пароль')
 
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='User is inactive',
-            )
+            raise ForbiddenError('Аккаунт не активен')
 
         if user.status != UserStatus.CONFIRMED:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='User account is not confirmed',
-            )
+            raise ForbiddenError('Аккаунт не подтвержден')
 
         return user
 
@@ -140,29 +132,17 @@ class AuthService:
         user_id = payload.get('sub')
 
         if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid access token',
-            )
+            raise UnauthorizedError('Невалидный access-токен')
 
         user = await self._user_repository.get(UUID(user_id))
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='User not found',
-            )
+            raise UnauthorizedError('Пользователь не найден')
 
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='User is inactive',
-            )
+            raise ForbiddenError('Аккаунт не активен')
 
         if user.status != UserStatus.CONFIRMED:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='User account is not confirmed',
-            )
+            raise ForbiddenError('Аккаунт не подтвержден')
 
         return user
 
@@ -173,10 +153,7 @@ class AuthService:
             user.id
         )
         if loaded_user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='User not found',
-            )
+            raise UnauthorizedError('Пользователь не найден')
 
         return loaded_user
 
@@ -186,10 +163,7 @@ class AuthService:
         refresh_jti = payload.get('jti')
 
         if user_id is None or refresh_jti is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid refresh token',
-            )
+            raise UnauthorizedError('Невалидный refresh-токен')
 
         refresh_session = (
             await self._refresh_session_service.get_valid_session_by_refresh_jti(
@@ -197,17 +171,11 @@ class AuthService:
             )
         )
         if refresh_session is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Refresh session is invalid',
-            )
+            raise UnauthorizedError('Сессия невалидна')
 
         user = await self._user_repository.get(UUID(user_id))
         if user is None or not user.is_active or user.status != UserStatus.CONFIRMED:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='User not found, inactive or not confirmed',
-            )
+            raise UnauthorizedError('Аккаунт не найден или неактивен')
 
         await self._refresh_session_service.invalidate_session(refresh_session)
 
@@ -218,10 +186,7 @@ class AuthService:
         refresh_jti = payload.get('jti')
 
         if refresh_jti is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid refresh token',
-            )
+            raise UnauthorizedError('Невалидный refresh-токен')
 
         await self._refresh_session_service.invalidate_session_by_refresh_jti(
             refresh_jti
@@ -248,17 +213,11 @@ class AuthService:
 
     async def change_password(self, request: PasswordChangeRequest) -> None:
         if request.password != request.password_confirm:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Passwords do not match',
-            )
+            raise BadRequestError('Пароль не совпадает')
 
         user = await self._user_repository.get(request.user_id)
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='User not found',
-            )
+            raise UnauthorizedError('Пользователь не найден')
 
         notification = await self._email_notification_service.get_valid_notification(
             user_id=request.user_id,
