@@ -1,8 +1,8 @@
 """add constraints to methods
 
-Revision ID: 9d93fe22555e
-Revises: f11767e98c64
-Create Date: 2026-05-12 19:02:01.768580
+Revision ID: d7720f0836c9
+Revises: 3b2f1d8a9c7e
+Create Date: 2026-05-12 23:23:21.707477
 
 """
 from typing import Sequence, Union
@@ -13,8 +13,8 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '9d93fe22555e'
-down_revision: Union[str, Sequence[str], None] = 'f11767e98c64'
+revision: str = 'd7720f0836c9'
+down_revision: Union[str, Sequence[str], None] = '3b2f1d8a9c7e'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
