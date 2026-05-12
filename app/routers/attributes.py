@@ -4,7 +4,7 @@ from fastapi import APIRouter, Query, status
 
 from app.dependencies.routers import AttributeVerifiedDep, ClassVerifiedDep
 from app.dependencies.services import AttributeServiceDep
-from app.models.attributes import AttributeCreate, AttributeModel, AttributeUpdate
+from app.models.attributes import AttributeCreate, AttributePublic, AttributeUpdate
 from app.schemas.attributes import AttributeFilters
 from app.schemas.base import PaginatedResponse
 
@@ -24,7 +24,7 @@ async def get_attributes(
     class_obj: ClassVerifiedDep,
     attribute_service: AttributeServiceDep,
     filters: Annotated[AttributeFilters, Query()],
-) -> PaginatedResponse[AttributeModel]:
+) -> PaginatedResponse[AttributePublic]:
     attributes = await attribute_service.get_attributes(class_obj.id, filters)
 
     total = await attribute_service.count_attributes(class_obj.id, filters)
@@ -45,7 +45,7 @@ async def create_attribute(
     class_obj: ClassVerifiedDep,
     attribute_create: AttributeCreate,
     attribute_service: AttributeServiceDep,
-) -> AttributeModel:
+) -> AttributePublic:
     return await attribute_service.create_attribute(attribute_create, class_obj.id)
 
 
@@ -55,7 +55,7 @@ async def create_attribute(
 )
 async def get_attribute(
     attribute: AttributeVerifiedDep,
-) -> AttributeModel:
+) -> AttributePublic:
     return attribute
 
 
@@ -67,7 +67,7 @@ async def update_attribute(
     attribute: AttributeVerifiedDep,
     attribute_update: AttributeUpdate,
     attribute_service: AttributeServiceDep,
-) -> AttributeModel:
+) -> AttributePublic:
     return await attribute_service.update_attribute(attribute.id, attribute_update)
 
 

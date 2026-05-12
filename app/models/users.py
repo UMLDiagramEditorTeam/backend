@@ -1,3 +1,4 @@
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from pydantic import EmailStr
@@ -7,9 +8,15 @@ from app.models.base import BaseModel
 from app.models.user_roles import UserRoleLink
 
 if TYPE_CHECKING:
+    from app.models.email_notifications import EmailNotificationModel
     from app.models.projects import ProjectModel
     from app.models.refresh_sessions import RefreshSessionModel
     from app.models.roles import RoleModel
+
+
+class UserStatus(StrEnum):
+    CREATED = 'CREATED'
+    CONFIRMED = 'CONFIRMED'
 
 
 class UserBase(SQLModel):
@@ -19,6 +26,7 @@ class UserBase(SQLModel):
 
 class UserPublic(BaseModel, UserBase):
     is_active: bool = True
+    status: UserStatus = UserStatus.CREATED
 
 
 class UserCreate(UserBase):
@@ -34,6 +42,7 @@ class UserModel(UserPublic, table=True):
 
     password_hash: str = Field(max_length=255)
     is_active: bool = Field(default=True, nullable=False)
+    status: UserStatus = Field(default=UserStatus.CREATED, nullable=False)
 
     projects: list['ProjectModel'] = Relationship(back_populates='user')
     roles: list['RoleModel'] = Relationship(
@@ -41,5 +50,8 @@ class UserModel(UserPublic, table=True):
         link_model=UserRoleLink,
     )
     refresh_sessions: list['RefreshSessionModel'] = Relationship(
+        back_populates='user',
+    )
+    email_notifications: list['EmailNotificationModel'] = Relationship(
         back_populates='user',
     )

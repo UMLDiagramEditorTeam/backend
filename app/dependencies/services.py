@@ -10,6 +10,8 @@ from app.dependencies.repositories import (
 from app.services.arguments import ArgumentService
 from app.services.attributes import AttributeService
 from app.services.classes import ClassService
+from app.services.email import EmailService
+from app.services.email_notifications import EmailNotificationService
 from app.services.interfaces import InterfaceService
 from app.services.methods import MethodService
 from app.services.projects import ProjectService
@@ -26,6 +28,13 @@ RefreshSessionServiceDep = Annotated[
     RefreshSessionService,
     Depends(RefreshSessionService),
 ]
+
+EmailNotificationServiceDep = Annotated[
+    EmailNotificationService,
+    Depends(EmailNotificationService),
+]
+
+EmailServiceDep = Annotated[EmailService, Depends(EmailService)]
 
 RBACServiceDep = Annotated[RBACService, Depends(RBACService)]
 
