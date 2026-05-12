@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from uuid import UUID
 
 from app.dependencies.repositories import (
     RefreshSessionRepositoryDep,
@@ -49,3 +50,12 @@ class RefreshSessionService:
             return
 
         await self.invalidate_session(refresh_session)
+
+    async def invalidate_sessions_by_user_id(self, user_id: UUID) -> None:
+        refresh_sessions = await self._refresh_session_repository.fetch(
+            user_id=user_id,
+            is_valid=True,
+        )
+        for refresh_session in refresh_sessions:
+            refresh_session.is_valid = False
+            await self._refresh_session_repository.save(refresh_session)
