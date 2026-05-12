@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, Security
 from fastapi.security import SecurityScopes
 
+from app.core.errors import ForbiddenError
 from app.core.security import oauth2_scheme
 from app.dependencies.auth import AuthServiceDep
 from app.dependencies.services import RBACServiceDep
@@ -24,9 +25,9 @@ async def get_current_user_with_scopes(
                 scope for scope in security_scopes.scopes if scope not in user_scopes
             ]
             if missing_scopes:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f'Missing required scopes: {", ".join(missing_scopes)}',
+                raise ForbiddenError(
+                    message='Отсутствуют обязательные области: '
+                    f'{", ".join(missing_scopes)}'
                 )
 
     return user

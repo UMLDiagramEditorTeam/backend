@@ -1,8 +1,7 @@
 from uuid import UUID
 
-from fastapi import HTTPException, status
-
 from app.core.config import settings
+from app.core.errors import ConflictError, ForbiddenError, UnauthorizedError
 from app.dependencies.repositories import UserRepositoryDep
 from app.dependencies.services import RBACServiceDep, RefreshSessionServiceDep
 from app.models.refresh_sessions import RefreshSessionCreate
@@ -37,10 +36,7 @@ class AuthService:
     async def register(self, user_create: UserCreate) -> UserModel:
         existing_user = await self.get_user_by_email(user_create.email)
         if existing_user is not None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail='User with this email already exists',
-            )
+            raise ConflictError('Пользователь с таким email уже существует')
 
         user_dump = user_create.model_dump()
         password = str(user_dump.pop('password'))
@@ -61,16 +57,10 @@ class AuthService:
     async def authenticate_user(self, email: str, password: str) -> UserModel:
         user = await self.get_user_by_email(email)
         if user is None or not verify_password(password, user.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid credentials',
-            )
+            raise UnauthorizedError('Неверно введена почта или пароль')
 
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='User is inactive',
-            )
+            raise ForbiddenError('Аккаунт не активен')
 
         return user
 
@@ -83,23 +73,14 @@ class AuthService:
         user_id = payload.get('sub')
 
         if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid access token',
-            )
+            raise UnauthorizedError('Невалидный access-токен')
 
         user = await self._user_repository.get(UUID(user_id))
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='User not found',
-            )
+            raise UnauthorizedError('Пользователь не найден')
 
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail='User is inactive',
-            )
+            raise ForbiddenError('Аккаунт не активен')
 
         return user
 
@@ -110,10 +91,7 @@ class AuthService:
             user.id
         )
         if loaded_user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='User not found',
-            )
+            raise UnauthorizedError('Пользователь не найден')
 
         return loaded_user
 
@@ -123,28 +101,18 @@ class AuthService:
         refresh_jti = payload.get('jti')
 
         if user_id is None or refresh_jti is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid refresh token',
-            )
-
+            raise UnauthorizedError('Невалидный refresh-токен')
         refresh_session = (
             await self._refresh_session_service.get_valid_session_by_refresh_jti(
                 refresh_jti
             )
         )
         if refresh_session is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Refresh session is invalid',
-            )
+            raise UnauthorizedError('Сессия невалидна')
 
         user = await self._user_repository.get(UUID(user_id))
         if user is None or not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='User not found or inactive',
-            )
+            raise UnauthorizedError('Аккаунт не найден или неактивен')
 
         await self._refresh_session_service.invalidate_session(refresh_session)
 
@@ -155,10 +123,7 @@ class AuthService:
         refresh_jti = payload.get('jti')
 
         if refresh_jti is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid refresh token',
-            )
+            raise UnauthorizedError('Невалидный refresh-токен')
 
         await self._refresh_session_service.invalidate_session_by_refresh_jti(
             refresh_jti
