@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.dependencies.code_generation import CodeGenerationServiceDep
+from app.dependencies.code_genration_service import CodeGenerationServiceDep
 from app.dependencies.routers import ProjectVerifiedDep, WindowVerifiedDep
 from app.dependencies.services import WindowServiceDep
 from app.models.windows import WindowCreate, WindowPublic, WindowUpdate
@@ -92,8 +92,8 @@ async def generate_code(
     code_generation_service: CodeGenerationServiceDep,
     language: Annotated[TargetLanguage, Query()] = TargetLanguage.JAVA,
 ) -> CodeGenerationResponse:
-    resalt = await code_generation_service.generate(
+    result = await code_generation_service.generate(
         window_id=window.id,
         language=language,
     )
-    return CodeGenerationResponse(files=resalt)
+    return CodeGenerationResponse(files=result)
