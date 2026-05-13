@@ -80,8 +80,20 @@ class EmailSettings(BaseSettings):
     template_folder: str = 'app/templates/email'
     account_confirmation_subject: str = 'Account confirmation'
     password_reset_subject: str = 'Password reset confirmation'
-    account_confirmation_url: str = 'http://localhost:3000/auth/confirm'
-    password_reset_url: str = 'http://localhost:3000/auth/password/change'
+    account_confirmation_path: str = '/auth/confirm'
+    password_reset_path: str = '/auth/password/change'
+
+
+class FrontendSettings(BaseSettings):
+    scheme: str = 'http'
+    host: str = 'localhost'
+    port: int | None = 3000
+
+    @property
+    def origin(self) -> str:
+        if self.port is None:
+            return f'{self.scheme}://{self.host}'
+        return f'{self.scheme}://{self.host}:{self.port}'
 
 
 class Settings(BaseSettings):
@@ -97,6 +109,7 @@ class Settings(BaseSettings):
     rbac: RBACSettings
     email: EmailSettings
     smtp: SMTPSettings
+    frontend: FrontendSettings
 
     @property
     def database_url(self) -> str:

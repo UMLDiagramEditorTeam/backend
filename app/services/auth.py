@@ -225,6 +225,9 @@ class AuthService:
             action=EmailNotificationAction.PASSWORD_RESET,
         )
 
+        if verify_password(request.password, user.password_hash):
+            raise BadRequestError('Новый пароль должен отличаться от старого.')
+
         user.password_hash = hash_password(request.password)
         await self._user_repository.save(user)
         await self._email_notification_service.mark_as_used(notification)

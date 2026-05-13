@@ -46,8 +46,11 @@
 | EMAIL__TEMPLATE_FOLDER         | Email templates folder              | string | app/templates/email |
 | EMAIL__ACCOUNT_CONFIRMATION_SUBJECT | Account confirmation email subject | string | Account confirmation |
 | EMAIL__PASSWORD_RESET_SUBJECT  | Password reset email subject        | string | Password reset confirmation |
-| EMAIL__ACCOUNT_CONFIRMATION_URL | Frontend account confirmation URL  | string | http://localhost:3000/auth/confirm |
-| EMAIL__PASSWORD_RESET_URL      | Frontend password reset URL         | string | http://localhost:3000/auth/password/change |
+| EMAIL__ACCOUNT_CONFIRMATION_PATH | Frontend account confirmation path | string | /auth/confirm |
+| EMAIL__PASSWORD_RESET_PATH     | Frontend password reset path        | string | /auth/password/change |
+| FRONTEND__SCHEME               | Frontend URL scheme                 | string | http               |
+| FRONTEND__HOST                 | Frontend host                       | string | localhost          |
+| FRONTEND__PORT                 | Frontend port                       | number | 3000               |
 
 Для генерации JWT_PRIVATE_KEY можно использовать openssl
 
