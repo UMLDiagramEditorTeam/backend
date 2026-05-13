@@ -1,8 +1,6 @@
 from typing import Optional, Sequence
 from uuid import UUID
 
-from fastapi import HTTPException, status
-
 from app.dependencies.repositories import (
     ClassRepository,
     ClassRepositoryDep,
@@ -63,14 +61,15 @@ class ClassService:
         self, class_id: UUID, class_update: ClassUpdate
     ) -> Optional[ClassModel]:
         class_ = await self.__class_repository.get(class_id)
-        if class_ is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Class not found',
-            )
 
-        await self.__tile_service.update_tile(class_.tile_id, class_update.tile)
-        return await self.__class_repository.update(class_id, class_update)
+        if class_ is None:
+            return None
+
+        tile = class_update.tile
+        class_data = ClassModel(**class_update.model_dump(exclude={'tile'}))
+
+        await self.__tile_service.update_tile(class_.tile_id, tile)
+        return await self.__class_repository.update(class_id, class_data)
 
     async def delete_class(self, class_id: UUID) -> Optional[ClassModel]:
         return await self.__class_repository.delete(class_id)

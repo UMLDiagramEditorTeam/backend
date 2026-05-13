@@ -41,6 +41,25 @@ class Repository[Model: BaseModel]:
             statement = statement.where(filter_statement)
         return statement
 
+    def build_relation(self, relation_path: str):
+        parts = relation_path.split('.')
+
+        current_attr = getattr(self.model, parts[0])
+        loader = selectinload(current_attr)
+
+        current_model = current_attr.property.mapper.class_
+
+        current_loader = loader
+
+        for part in parts[1:]:
+            attr = getattr(current_model, part)
+
+            current_loader = current_loader.selectinload(attr)
+
+            current_model = attr.property.mapper.class_
+
+        return loader
+
     async def fetch(
         self, relations: list[str] | None = None, **filters
     ) -> Sequence[Model]:
@@ -50,7 +69,7 @@ class Repository[Model: BaseModel]:
         if relations is not None:
             for relation in relations:
                 select_statement = select_statement.options(
-                    selectinload(getattr(self.model, relation))
+                    self.build_relation(relation)
                 )
 
         if filters.get('offset') is not None:

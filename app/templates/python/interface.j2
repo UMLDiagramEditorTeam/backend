@@ -1,0 +1,16 @@
+from abc import ABC, abstractmethod
+
+class {{ interface.name }}(ABC{%- if extends -%}, {{ extends | map(attribute='name') | join(', ') }}{%- endif -%}
+):
+    {% for method in interface.methods %}
+    @abstractmethod
+    def {{ method.name }}(self
+        {%- for arg in method.arguments -%}
+            , {{ arg.name }}: {{ arg.type }}
+        {%- endfor -%}
+    ) -> {{ method.return_type }}:
+        pass
+    {% endfor %}
+    {% if not interface.methods %}
+    pass
+    {% endif %}

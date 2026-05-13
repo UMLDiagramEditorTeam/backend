@@ -1,13 +1,19 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import settings
 from app.dependencies.auth import AuthServiceDep, CurrentUserDep, RefreshTokenDep
 from app.models.users import UserCreate, UserPublic
-from app.schemas.auth import SuccessResponse, TokenResponse
+from app.schemas.auth import (
+    AccountConfirmationRequest,
+    PasswordChangeRequest,
+    PasswordResetRequest,
+    SuccessResponse,
+    TokenResponse,
+)
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
@@ -41,9 +47,24 @@ def delete_refresh_cookie(response: Response) -> None:
 )
 async def register(
     user_create: UserCreate,
+    background_tasks: BackgroundTasks,
     auth_service: AuthServiceDep,
 ) -> UserPublic:
-    return await auth_service.register(user_create)
+    return await auth_service.register(user_create, background_tasks)
+
+
+@router.post(
+    '/confirm-account',
+    status_code=status.HTTP_200_OK,
+)
+async def confirm_account(
+    request: AccountConfirmationRequest,
+    auth_service: AuthServiceDep,
+) -> UserPublic:
+    return await auth_service.confirm_account(
+        user_id=request.user_id,
+        code=request.code,
+    )
 
 
 @router.post(
@@ -105,3 +126,28 @@ async def refresh(
     return TokenResponse(
         access_token=tokens.access_token,
     )
+
+
+@router.post(
+    '/password/reset',
+    status_code=status.HTTP_200_OK,
+)
+async def request_password_reset(
+    request: PasswordResetRequest,
+    background_tasks: BackgroundTasks,
+    auth_service: AuthServiceDep,
+) -> SuccessResponse:
+    await auth_service.request_password_reset(request.email, background_tasks)
+    return SuccessResponse(success=True)
+
+
+@router.post(
+    '/password/change',
+    status_code=status.HTTP_200_OK,
+)
+async def change_password(
+    request: PasswordChangeRequest,
+    auth_service: AuthServiceDep,
+) -> SuccessResponse:
+    await auth_service.change_password(request)
+    return SuccessResponse(success=True)

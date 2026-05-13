@@ -38,10 +38,14 @@ class AuthSettings(BaseSettings):
     jwt_refresh_cookie_samesite: str = 'lax'
     jwt_refresh_cookie_path: str = '/'
     jwt_refresh_cookie_domain: str | None = None
+    account_confirmation_token_expire: timedelta = timedelta(days=1)
+    password_reset_token_expire: timedelta = timedelta(hours=1)
 
     @field_validator(
         'jwt_access_token_expire',
         'jwt_refresh_token_expire',
+        'account_confirmation_token_expire',
+        'password_reset_token_expire',
         mode='before',
     )
     @classmethod
@@ -59,6 +63,39 @@ class RBACSettings(BaseSettings):
     default_role: str = 'public'
 
 
+class SMTPSettings(BaseSettings):
+    username: str = ''
+    password: str = ''
+    host: str = 'smtp.example.com'
+    port: int = 587
+    use_credentials: bool = True
+    starttls: bool = True
+    ssl_tls: bool = False
+    validate_certs: bool = True
+
+
+class EmailSettings(BaseSettings):
+    from_email: str = 'noreply@example.com'
+    from_name: str = 'UML Diagram Editor'
+    template_folder: str = 'app/templates/email'
+    account_confirmation_subject: str = 'Account confirmation'
+    password_reset_subject: str = 'Password reset confirmation'
+    account_confirmation_path: str = '/auth/confirm'
+    password_reset_path: str = '/auth/password/change'
+
+
+class FrontendSettings(BaseSettings):
+    scheme: str = 'http'
+    host: str = 'localhost'
+    port: int | None = 3000
+
+    @property
+    def origin(self) -> str:
+        if self.port is None:
+            return f'{self.scheme}://{self.host}'
+        return f'{self.scheme}://{self.host}:{self.port}'
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file='.env',
@@ -70,6 +107,9 @@ class Settings(BaseSettings):
     db: DBSettings
     auth: AuthSettings
     rbac: RBACSettings
+    email: EmailSettings
+    smtp: SMTPSettings
+    frontend: FrontendSettings
 
     @property
     def database_url(self) -> str:

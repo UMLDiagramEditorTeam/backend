@@ -29,8 +29,28 @@
 | AUTH__JWT_ALGORITHM            | JWT signing algorithm               | string | HS256              |
 | AUTH__JWT_ACCESS_TOKEN_EXPIRE  | Access token lifetime in seconds    | number | 3600               |
 | AUTH__JWT_REFRESH_TOKEN_EXPIRE | Refresh token lifetime in seconds   | number | 604800             |
+| AUTH__ACCOUNT_CONFIRMATION_TOKEN_EXPIRE | Account confirmation code lifetime in seconds | number | 86400 |
+| AUTH__PASSWORD_RESET_TOKEN_EXPIRE | Password reset code lifetime in seconds | number | 3600 |
 | RBAC__ADMIN_EMAIL              | Default admin user email            | string | admin@example.com  |
 | RBAC__ADMIN_PASSWORD           | Default admin user password         | string | admin123456        |
+| SMTP__USERNAME                 | SMTP service username/email         | string |                    |
+| SMTP__PASSWORD                 | SMTP service app password           | string |                    |
+| SMTP__HOST                     | SMTP server host                    | string | smtp.example.com   |
+| SMTP__PORT                     | SMTP server port                    | number | 587                |
+| SMTP__USE_CREDENTIALS          | Use credentials for SMTP connection | boolean | true              |
+| SMTP__STARTTLS                 | Enable STARTTLS for SMTP connection | boolean | true              |
+| SMTP__SSL_TLS                  | Enable SSL/TLS for SMTP connection  | boolean | false             |
+| SMTP__VALIDATE_CERTS           | Validate SMTP TLS certificates      | boolean | true              |
+| EMAIL__FROM_EMAIL              | Sender email address                | string | noreply@example.com |
+| EMAIL__FROM_NAME               | Sender display name                 | string | UML Diagram Editor |
+| EMAIL__TEMPLATE_FOLDER         | Email templates folder              | string | app/templates/email |
+| EMAIL__ACCOUNT_CONFIRMATION_SUBJECT | Account confirmation email subject | string | Account confirmation |
+| EMAIL__PASSWORD_RESET_SUBJECT  | Password reset email subject        | string | Password reset confirmation |
+| EMAIL__ACCOUNT_CONFIRMATION_PATH | Frontend account confirmation path | string | /auth/confirm |
+| EMAIL__PASSWORD_RESET_PATH     | Frontend password reset path        | string | /auth/password/change |
+| FRONTEND__SCHEME               | Frontend URL scheme                 | string | http               |
+| FRONTEND__HOST                 | Frontend host                       | string | localhost          |
+| FRONTEND__PORT                 | Frontend port                       | number | 3000               |
 
 Для генерации JWT_PRIVATE_KEY можно использовать openssl
 

@@ -1,9 +1,10 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 
 from app.core.config import settings
+from app.core.errors import ForbiddenError, NotFoundError
 from app.dependencies.auth import CurrentUserDep
 from app.dependencies.services import (
     AttributeServiceDep,
@@ -27,7 +28,7 @@ async def get_verified_project(
 ) -> ProjectModel:
     project = await project_service.get_project(project_id)
     if project is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundError()
 
     if project.user_id != current_user.id:
         user_roles = (
@@ -36,7 +37,7 @@ async def get_verified_project(
             else set()
         )
         if settings.rbac.admin_role not in user_roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+            raise ForbiddenError()
 
     return project
 
@@ -51,7 +52,7 @@ async def get_verified_window(
 ) -> WindowModel:
     window = await window_service.get_window(window_id)
     if window is None or window.project_id != project.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundError()
     return window
 
 
@@ -65,7 +66,7 @@ async def get_verified_class(
 ) -> ClassModel:
     class_obj = await class_service.get_class(class_id)
     if class_obj is None or class_obj.window_id != window.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundError()
     return class_obj
 
 
@@ -79,7 +80,7 @@ async def get_verified_interface(
 ) -> InterfaceModel:
     interface = await interface_service.get_interface(interface_id)
     if interface is None or interface.window_id != window.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundError()
     return interface
 
 
@@ -93,7 +94,7 @@ async def get_verified_attribute(
 ) -> AttributeModel:
     attribute = await attribute_service.get_attribute(attribute_id)
     if attribute is None or attribute.class_id != class_obj.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundError()
     return attribute
 
 
@@ -107,7 +108,7 @@ async def get_verified_class_method(
 ) -> MethodModel:
     method = await method_service.get_method(method_id)
     if method is None or method.class_id != class_obj.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundError()
     return method
 
 
@@ -121,7 +122,7 @@ async def get_verified_interface_method(
 ) -> MethodModel:
     method = await method_service.get_method(method_id)
     if method is None or method.interface_id != interface.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundError()
     return method
 
 
@@ -137,7 +138,7 @@ async def get_verified_relation(
 ) -> RelationModel:
     relation = await relation_service.get_relation(relation_id)
     if relation is None or relation.window_id != window.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundError()
     return relation
 
 

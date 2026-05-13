@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
 
+from app.core.error_handlers import exception_handler
+from app.core.middlewares import request_logging_middleware
 from app.db.database import async_session_factory
 from app.models.permissions import PermissionModel
 from app.models.role_permissions import RolePermissionLink
@@ -64,6 +66,9 @@ app = FastAPI(
     redoc_url=f'{api_prefix}/redoc',
     lifespan=lifespan,
 )
+
+app.add_exception_handler(exc_class_or_status_code=Exception, handler=exception_handler)
+app.middleware('http')(request_logging_middleware)
 
 app_router = APIRouter(prefix=f'{api_prefix}/{api_version}')
 
