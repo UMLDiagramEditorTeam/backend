@@ -14,6 +14,7 @@ from app.routers import (
     attributes,
     auth,
     classes,
+    health,
     interfaces,
     methods,
     projects,
@@ -82,5 +83,6 @@ app_router.include_router(methods.class_methods_router)
 app_router.include_router(methods.interface_methods_router)
 app_router.include_router(attributes.router)
 app_router.include_router(relations.router)
+app_router.include_router(health.router)
 
 app.include_router(app_router)
