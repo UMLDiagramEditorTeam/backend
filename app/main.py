@@ -36,9 +36,9 @@ limiter = Limiter(
 app = FastAPI(
     title='UML Diagram Editor API',
     version=api_version,
-    openapi_url=f'{api_prefix}/openapi.json',
-    docs_url=f'{api_prefix}/docs',
-    redoc_url=f'{api_prefix}/redoc',
+    openapi_url=f'{api_prefix}/openapi.json' if settings.common.debug else None,
+    docs_url=f'{api_prefix}/docs' if settings.common.debug else None,
+    redoc_url=f'{api_prefix}/redoc' if settings.common.debug else None,
 )
 
 app.state.limiter = limiter
@@ -47,10 +47,10 @@ app.add_exception_handler(exc_class_or_status_code=Exception, handler=exception_
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend.origin],
+    allow_origins=[settings.common.host],
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allow_headers=['Authorization', 'Content-Type', 'X-Requested-With'],
 )
 app.middleware('http')(request_logging_middleware)
 
