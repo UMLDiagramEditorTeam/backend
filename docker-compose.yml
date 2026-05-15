@@ -1,4 +1,4 @@
-name: uml-diagram-editro-compose
+name: uml-diagram-editor-compose
 
 x-base: &base
   build: .

@@ -1,40 +1,36 @@
-FROM python:3.13-slim-bookworm AS base
+FROM python:3.13-slim AS base
+FROM base AS builder
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    UV_LINK_MODE=copy \
-    UV_COMPILE_BYTECODE=1
+COPY --from=ghcr.io/astral-sh/uv:0.11.3 /uv /uvx /bin/
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PYTHON=python3.13
 
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-dev --no-install-project
 
-COPY --from=docker.io/astral/uv:latest /uv /uvx /bin/
+FROM base AS starter
 
-FROM base AS deps
+RUN apt-get update -y \
+    && apt-get upgrade -y \
+    && apt install curl -y
 
-COPY pyproject.toml uv.lock ./
+WORKDIR /app
 
-RUN uv sync \
-    --frozen \
-    --no-dev
-
-FROM base AS runtime
-
-RUN useradd -m -u 10001 appuser
-
-COPY --from=deps /app/.venv /app/.venv
-
-COPY . .
+COPY --from=builder /app/.venv /app/.venv
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-USER appuser
+COPY . /app
 
 EXPOSE 8000
+
+USER 1000
 
 CMD [ "gunicorn", "app.main:app", "-c", "gunicorn_config.py" ]
