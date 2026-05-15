@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>UML Diagram Editor</title>
+    <style>
+        body {
+            font-family: monospace;
+            text-align: center;
+            padding: 50px;
+            background: #1e1e1e;
+            color: #fff;
+        }
+        .box {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        .green {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🎨 UML Diagram Editor</h1>
+        <p class="green">✅ Nginx работает успешно</p>
+        <p>API: <span id="api">проверка...</span></p>
+        <p>Время: <span id="time"></span></p>
+    </div>
+
+    <script>
+        document.getElementById('time').innerHTML = new Date().toLocaleString();
+
+        fetch('/api/v1/health')
+            .then(r => r.ok ? document.getElementById('api').innerHTML = '✅ доступен' : '❌ ошибка')
+            .catch(() => document.getElementById('api').innerHTML = '❌ недоступен');
+    </script>
+</body>
+</html>

@@ -57,6 +57,11 @@
 ```bash
 openssl rand -hex 32
 ```
+
+## Для запуска через Docker
+```bash
+docker compose up
+```
 ## До запуска проекта
 
 Клонирование репозитория
