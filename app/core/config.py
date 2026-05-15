@@ -2,7 +2,7 @@ from datetime import timedelta
 from functools import lru_cache
 from typing import Any
 
-from pydantic import Field, computed_field, field_validator
+from pydantic import computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -122,7 +122,7 @@ class Settings(BaseSettings):
     email: EmailSettings
     smtp: SMTPSettings
     frontend: FrontendSettings
-    common: CommonSettings = Field(default_factory=CommonSettings)
+    common: CommonSettings
 
     @property
     def database_url(self) -> str:
