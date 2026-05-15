@@ -1,7 +1,13 @@
-name: uml-diagram-editor-compose
+name: uml-diagram-editor
 
-x-base: &base
-  build: .
+x-back-image: &back-image
+  image: ropoy/uml-diagram-editor-api:latest
+
+x-front-image: &front-image
+  image: nginx:stable-alpine
+
+x-back-base: &back-base
+  <<: *back-image
   env_file:
     - .env
   environment:
@@ -25,27 +31,27 @@ services:
       start_period: 10s
 
   alembic:
-    <<: *base
+    <<: *back-base
     restart: on-failure
     depends_on:
       db:
         condition: service_healthy
     command: ["alembic", "upgrade", "head"]
   rbac:
-    <<: *base
+    <<: *back-base
     restart: on-failure
     depends_on:
       alembic:
         condition: service_completed_successfully
     command: ["python3", "init.py"]
   api:
-    <<: *base
+    <<: *back-base
     depends_on:
       rbac:
         condition: service_completed_successfully
     restart: always
-    ports:
-      - 8000:8000
+    expose:
+      - "8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
@@ -53,7 +59,7 @@ services:
       retries: 3
       start_period: 10s
   web:
-    image: nginx:stable-alpine
+    <<: *front-image
     restart: always
     ports:
       - "80:80"
