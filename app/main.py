@@ -1,15 +1,13 @@
-from contextlib import asynccontextmanager
-
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
+from app.core.config import settings
 from app.core.error_handlers import exception_handler
 from app.core.middlewares import request_logging_middleware
-from app.db.database import async_session_factory
-from app.models.permissions import PermissionModel
-from app.models.role_permissions import RolePermissionLink
-from app.models.roles import RoleModel
-from app.models.user_roles import UserRoleLink
-from app.models.users import UserModel
 from app.routers import (
     attributes,
     auth,
@@ -21,53 +19,39 @@ from app.routers import (
     users,
     windows,
 )
-from app.services.bootstrap import BootstrapService
-from app.services.rbac import RBACService
-from app.utils.repository import Repository
 
 api_prefix = '/api'
 
 api_version = 'v1'
 
+default_rate_limits = ['100/minute']
 
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    async with async_session_factory() as session:
-        user_repository = Repository[UserModel](session)
-        role_repository = Repository[RoleModel](session)
-        permission_repository = Repository[PermissionModel](session)
-        user_role_repository = Repository[UserRoleLink](session)
-        role_permission_repository = Repository[RolePermissionLink](session)
-
-        rbac_service = RBACService(
-            role_repository=role_repository,
-            permission_repository=permission_repository,
-            user_repository=user_repository,
-            user_role_repository=user_role_repository,
-            role_permission_repository=role_permission_repository,
-        )
-
-        bootstrap_service = BootstrapService(
-            user_repository=user_repository,
-            role_repository=role_repository,
-            rbac_service=rbac_service,
-        )
-
-        await bootstrap_service.run()
-
-    yield
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=default_rate_limits,
+    headers_enabled=True,
+)
 
 
 app = FastAPI(
     title='UML Diagram Editor API',
     version=api_version,
-    openapi_url=f'{api_prefix}/openapi.json',
-    docs_url=f'{api_prefix}/docs',
-    redoc_url=f'{api_prefix}/redoc',
-    lifespan=lifespan,
+    openapi_url=f'{api_prefix}/openapi.json' if settings.common.debug else None,
+    docs_url=f'{api_prefix}/docs' if settings.common.debug else None,
+    redoc_url=f'{api_prefix}/redoc' if settings.common.debug else None,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_exception_handler(exc_class_or_status_code=Exception, handler=exception_handler)
+app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.common.host],
+    allow_credentials=True,
+    allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allow_headers=['Authorization', 'Content-Type', 'X-Requested-With'],
+)
 app.middleware('http')(request_logging_middleware)
 
 app_router = APIRouter(prefix=f'{api_prefix}/{api_version}')
