@@ -2,7 +2,7 @@ from datetime import timedelta
 from functools import lru_cache
 from typing import Any
 
-from pydantic import field_validator
+from pydantic import computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -96,6 +96,18 @@ class FrontendSettings(BaseSettings):
         return f'{self.scheme}://{self.host}:{self.port}'
 
 
+class CommonSettings(BaseSettings):
+    debug: bool = False
+    port: int = 8000
+
+    @computed_field
+    @property
+    def host(self) -> str:
+        if self.debug:
+            return f'http://localhost:{self.port}'
+        return 'https://example.com'
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file='.env',
@@ -110,6 +122,7 @@ class Settings(BaseSettings):
     email: EmailSettings
     smtp: SMTPSettings
     frontend: FrontendSettings
+    common: CommonSettings
 
     @property
     def database_url(self) -> str:

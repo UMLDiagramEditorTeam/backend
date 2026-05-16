@@ -57,6 +57,11 @@
 ```bash
 openssl rand -hex 32
 ```
+
+## Для запуска через Docker
+```bash
+docker compose up
+```
 ## До запуска проекта
 
 Клонирование репозитория
@@ -72,9 +77,19 @@ uv sync
 uv run alembic upgrade head
 ```
 
+### Инициализация RBAC
+```bash
+uv run init.py
+```
+
 ## Запуск проекта
 ```bash
 uv run fastapi dev
+```
+
+## Запуск через gunicorn
+```bash
+uv run gunicorn app.main:app -c gunicorn_config.py --reload
 ```
 
 ## Для разработчиков
