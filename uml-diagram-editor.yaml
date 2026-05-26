@@ -6,8 +6,8 @@ info:
     Позволяет управлять проектами, элементами диаграмм и автоматически синхронизировать визуальные модели с программным кодом.
   version: 1.1.1
 servers:
-- url: https://virtserver.swaggerhub.com/bbb-7fb/spec/1.1.1
-  description: SwaggerHub API Auto Mocking
+- url: /api/v1
+  description: Backend API v1
 security:
 - bearerAuth: []
 tags:
@@ -47,9 +47,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RegisterResponse"
+                $ref: "#/components/schemas/User"
         "409":
           $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/confirm-account:
+    post:
+      tags:
+      - Auth
+      summary: Подтверждение аккаунта
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountConfirmationRequest"
+        required: true
+      responses:
+        "200":
+          description: Аккаунт подтвержден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
         "422":
           $ref: "#/components/responses/ValidationError"
         "500":
@@ -61,7 +83,7 @@ paths:
       summary: Вход в систему
       requestBody:
         content:
-          application/json:
+          application/x-www-form-urlencoded:
             schema:
               $ref: "#/components/schemas/LoginRequest"
         required: true
@@ -71,7 +93,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginResponse"
+                $ref: "#/components/schemas/TokenResponse"
         "401":
           description: Неверные учетные данные
           content:
@@ -93,13 +115,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LogoutResponse"
+                $ref: "#/components/schemas/SuccessResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
+  /auth/refresh:
+    post:
+      tags:
+      - Auth
+      summary: Обновление access-токена
+      responses:
+        "200":
+          description: Токен обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /auth/me:
     get:
       tags:
@@ -118,7 +156,29 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /auth/password-change:
+  /auth/password/reset:
+    post:
+      tags:
+      - Auth
+      summary: Запрос сброса пароля
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+        required: true
+      responses:
+        "200":
+          description: Запрос обработан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/password/change:
     post:
       tags:
         - Auth
@@ -135,7 +195,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChangePasswordResponse"
+                $ref: "#/components/schemas/SuccessResponse"
         "400":
           description: Неверный текущий пароль или новый пароль совпадает со старым
           content:
@@ -217,13 +277,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /users/{id}:
+  /users/{user_id}:
     get:
       tags:
       - Users
       summary: Получить пользователя по ID
       parameters:
-      - name: id
+      - name: user_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -252,7 +312,7 @@ paths:
       - Users
       summary: Обновить данные пользователя
       parameters:
-      - name: id
+      - name: user_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -291,7 +351,7 @@ paths:
       - Users
       summary: Удалить пользователя
       parameters:
-      - name: id
+      - name: user_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -307,6 +367,44 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /users/{user_id}/roles:
+    patch:
+      tags:
+      - Users
+      summary: Обновить роли пользователя
+      parameters:
+      - name: user_id
+        in: path
+        description: ID пользователя
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRolesRequest"
+        required: true
+      responses:
+        "200":
+          description: Роли обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
         "500":
           $ref: "#/components/responses/InternalServerError"
       security:
@@ -384,13 +482,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /projects/{id}:
+  /projects/{project_id}:
     get:
       tags:
       - Projects
       summary: Получить проект по ID
       parameters:
-      - name: id
+      - name: project_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -419,7 +517,7 @@ paths:
       - Projects
       summary: Обновить данные проекта
       parameters:
-      - name: id
+      - name: project_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -456,7 +554,7 @@ paths:
       - Projects
       summary: Удалить проект
       parameters:
-      - name: id
+      - name: project_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -476,13 +574,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /projects/{projectId}/windows:
+  /projects/{project_id}/windows:
     get:
       tags:
       - Windows
       summary: Получить все окна проекта
       parameters:
-      - name: projectId
+      - name: project_id
         in: path
         description: ID проекта
         required: true
@@ -537,7 +635,7 @@ paths:
       - Windows
       summary: Создать новое окно в проекте
       parameters:
-      - name: projectId
+      - name: project_id
         in: path
         description: ID проекта
         required: true
@@ -569,20 +667,20 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /projects/{projectId}/windows/{id}:
+  /projects/{project_id}/windows/{window_id}:
     get:
       tags:
       - Windows
       summary: Получить окно по ID
       parameters:
-      - name: projectId
+      - name: project_id
         in: path
         description: ID проекта
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: window_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -611,14 +709,14 @@ paths:
       - Windows
       summary: Обновить данные окна
       parameters:
-      - name: projectId
+      - name: project_id
         in: path
         description: ID проекта
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: window_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -655,14 +753,14 @@ paths:
       - Windows
       summary: Удалить окно
       parameters:
-      - name: projectId
+      - name: project_id
         in: path
         description: ID проекта
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: window_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -682,13 +780,61 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /windows/{windowId}/classes:
+  /projects/{project_id}/windows/{window_id}/generate_code:
+    post:
+      tags:
+      - Windows
+      summary: Сгенерировать код по окну
+      parameters:
+      - name: project_id
+        in: path
+        description: ID проекта
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: window_id
+        in: path
+        description: ID окна
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: language
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - java
+          - python
+          default: java
+      responses:
+        "200":
+          description: Код сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeGenerationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/CodeGenerationValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      security:
+      - bearerAuth: []
+  /windows/{window_id}/classes:
     get:
       tags:
       - Classes
       summary: Получить все классы в окне
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
@@ -746,7 +892,7 @@ paths:
       - Classes
       summary: Создать новый класс в окне
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
@@ -780,20 +926,20 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /windows/{windowId}/classes/{id}:
+  /windows/{window_id}/classes/{class_id}:
     get:
       tags:
       - Classes
       summary: Получить класс по ID
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: class_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -822,14 +968,14 @@ paths:
       - Classes
       summary: Обновить данные класса
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: class_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -868,14 +1014,14 @@ paths:
       - Classes
       summary: Удалить класс
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: class_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -895,13 +1041,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /windows/{windowId}/interfaces:
+  /windows/{window_id}/interfaces:
     get:
       tags:
       - Interfaces
       summary: Получить все интерфейсы в окне
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
@@ -953,7 +1099,7 @@ paths:
       - Interfaces
       summary: Создать новый интерфейс в окне
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
@@ -987,20 +1133,20 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /windows/{windowId}/interfaces/{id}:
+  /windows/{window_id}/interfaces/{interface_id}:
     get:
       tags:
       - Interfaces
       summary: Получить интерфейс по ID
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: interface_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -1029,14 +1175,14 @@ paths:
       - Interfaces
       summary: Обновить данные интерфейса
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: interface_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -1075,14 +1221,14 @@ paths:
       - Interfaces
       summary: Удалить интерфейс
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: interface_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -1102,13 +1248,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /classes/{classId}/attributes:
+  /classes/{class_id}/attributes:
     get:
       tags:
       - Attributes
       summary: Получить все атрибуты класса
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
@@ -1154,7 +1300,7 @@ paths:
       - Attributes
       summary: Создать новый атрибут для класса
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
@@ -1186,20 +1332,20 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /classes/{classId}/attributes/{attributeId}:
+  /classes/{class_id}/attributes/{attribute_id}:
     get:
       tags:
       - Attributes
       summary: Получить атрибут класса по ID
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
         schema:
           type: string
           format: uuid
-      - name: attributeId
+      - name: attribute_id
         in: path
         description: ID атрибута
         required: true
@@ -1228,14 +1374,14 @@ paths:
       - Attributes
       summary: Обновить атрибут класса
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
         schema:
           type: string
           format: uuid
-      - name: attributeId
+      - name: attribute_id
         in: path
         description: ID атрибута
         required: true
@@ -1272,14 +1418,14 @@ paths:
       - Attributes
       summary: Удалить атрибут класса
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
         schema:
           type: string
           format: uuid
-      - name: attributeId
+      - name: attribute_id
         in: path
         description: ID атрибута
         required: true
@@ -1299,210 +1445,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /interfaces/{interfaceId}/attributes:
-    get:
-      tags:
-      - Attributes
-      summary: Получить все атрибуты интерфейса
-      parameters:
-      - name: interfaceId
-        in: path
-        description: ID интерфейса
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: page
-        in: query
-        description: Номер страницы (с 1)
-        required: false
-        schema:
-          minimum: 1
-          type: integer
-          default: 1
-      - name: limit
-        in: query
-        description: Количество элементов на странице
-        required: false
-        schema:
-          maximum: 100
-          minimum: 1
-          type: integer
-          default: 20
-      responses:
-        "200":
-          description: Список атрибутов интерфейса
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/inline_response_200_5"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      security:
-      - bearerAuth: []
-    post:
-      tags:
-      - Attributes
-      summary: Создать новый атрибут для интерфейса
-      parameters:
-      - name: interfaceId
-        in: path
-        description: ID интерфейса
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AttributeCreate"
-        required: true
-      responses:
-        "201":
-          description: Атрибут создан
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Attribute"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "422":
-          $ref: "#/components/responses/ValidationError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      security:
-      - bearerAuth: []
-  /interfaces/{interfaceId}/attributes/{attributeId}:
-    get:
-      tags:
-      - Attributes
-      summary: Получить атрибут интерфейса по ID
-      parameters:
-      - name: interfaceId
-        in: path
-        description: ID интерфейса
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: attributeId
-        in: path
-        description: ID атрибута
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        "200":
-          description: Информация об атрибуте
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Attribute"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      security:
-      - bearerAuth: []
-    put:
-      tags:
-      - Attributes
-      summary: Обновить атрибут интерфейса
-      parameters:
-      - name: interfaceId
-        in: path
-        description: ID интерфейса
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: attributeId
-        in: path
-        description: ID атрибута
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AttributeUpdate"
-        required: true
-      responses:
-        "200":
-          description: Атрибут обновлен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Attribute"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "422":
-          $ref: "#/components/responses/ValidationError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      security:
-      - bearerAuth: []
-    delete:
-      tags:
-      - Attributes
-      summary: Удалить атрибут интерфейса
-      parameters:
-      - name: interfaceId
-        in: path
-        description: ID интерфейса
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: attributeId
-        in: path
-        description: ID атрибута
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        "204":
-          description: Атрибут успешно удален
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      security:
-      - bearerAuth: []
-  /classes/{classId}/methods:
+  /classes/{class_id}/methods:
     get:
       tags:
       - Methods
       summary: Получить все методы класса
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
@@ -1548,7 +1497,7 @@ paths:
       - Methods
       summary: Создать новый метод для класса
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
@@ -1580,20 +1529,20 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /classes/{classId}/methods/{methodId}:
+  /classes/{class_id}/methods/{method_id}:
     get:
       tags:
       - Methods
       summary: Получить метод класса по ID
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
         schema:
           type: string
           format: uuid
-      - name: methodId
+      - name: method_id
         in: path
         description: ID метода
         required: true
@@ -1622,14 +1571,14 @@ paths:
       - Methods
       summary: Обновить метод класса
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
         schema:
           type: string
           format: uuid
-      - name: methodId
+      - name: method_id
         in: path
         description: ID метода
         required: true
@@ -1666,14 +1615,14 @@ paths:
       - Methods
       summary: Удалить метод класса
       parameters:
-      - name: classId
+      - name: class_id
         in: path
         description: ID класса
         required: true
         schema:
           type: string
           format: uuid
-      - name: methodId
+      - name: method_id
         in: path
         description: ID метода
         required: true
@@ -1693,13 +1642,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /interfaces/{interfaceId}/methods:
+  /interfaces/{interface_id}/methods:
     get:
       tags:
       - Methods
       summary: Получить все методы интерфейса
       parameters:
-      - name: interfaceId
+      - name: interface_id
         in: path
         description: ID интерфейса
         required: true
@@ -1745,7 +1694,7 @@ paths:
       - Methods
       summary: Создать новый метод для интерфейса
       parameters:
-      - name: interfaceId
+      - name: interface_id
         in: path
         description: ID интерфейса
         required: true
@@ -1777,20 +1726,20 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /interfaces/{interfaceId}/methods/{methodId}:
+  /interfaces/{interface_id}/methods/{method_id}:
     get:
       tags:
       - Methods
       summary: Получить метод интерфейса по ID
       parameters:
-      - name: interfaceId
+      - name: interface_id
         in: path
         description: ID интерфейса
         required: true
         schema:
           type: string
           format: uuid
-      - name: methodId
+      - name: method_id
         in: path
         description: ID метода
         required: true
@@ -1819,14 +1768,14 @@ paths:
       - Methods
       summary: Обновить метод интерфейса
       parameters:
-      - name: interfaceId
+      - name: interface_id
         in: path
         description: ID интерфейса
         required: true
         schema:
           type: string
           format: uuid
-      - name: methodId
+      - name: method_id
         in: path
         description: ID метода
         required: true
@@ -1863,14 +1812,14 @@ paths:
       - Methods
       summary: Удалить метод интерфейса
       parameters:
-      - name: interfaceId
+      - name: interface_id
         in: path
         description: ID интерфейса
         required: true
         schema:
           type: string
           format: uuid
-      - name: methodId
+      - name: method_id
         in: path
         description: ID метода
         required: true
@@ -1890,13 +1839,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /windows/{windowId}/relations:
+  /windows/{window_id}/relations:
     get:
       tags:
       - Relations
       summary: Получить все связи в окне
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
@@ -1963,7 +1912,7 @@ paths:
       - Relations
       summary: Создать новую связь в окне
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
@@ -1997,20 +1946,20 @@ paths:
           $ref: "#/components/responses/InternalServerError"
       security:
       - bearerAuth: []
-  /windows/{windowId}/relations/{id}:
+  /windows/{window_id}/relations/{relation_id}:
     get:
       tags:
       - Relations
       summary: Получить связь по ID
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: relation_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -2039,14 +1988,14 @@ paths:
       - Relations
       summary: Обновить данные связи
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: relation_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -2083,14 +2032,14 @@ paths:
       - Relations
       summary: Удалить связь
       parameters:
-      - name: windowId
+      - name: window_id
         in: path
         description: ID окна
         required: true
         schema:
           type: string
           format: uuid
-      - name: id
+      - name: relation_id
         in: path
         description: Уникальный идентификатор ресурса
         required: true
@@ -2131,69 +2080,57 @@ components:
           description: Код ошибки для программной обработки
           example: INVALID_FORMAT
     ErrorResponse:
-      required:
-      - error
       type: object
       properties:
-        error:
-          $ref: "#/components/schemas/ErrorResponse_error"
+        message:
+          type: string
+          nullable: true
+        detail:
+          nullable: true
+          oneOf:
+          - type: object
+          - type: array
+            items:
+              type: object
+          - type: string
     UnauthorizedError:
-      required:
-      - error
-      type: object
-      properties:
-        error:
-          $ref: "#/components/schemas/UnauthorizedError_error"
+      allOf:
+      - $ref: "#/components/schemas/ErrorResponse"
     ForbiddenError:
-      required:
-      - error
-      type: object
-      properties:
-        error:
-          $ref: "#/components/schemas/ForbiddenError_error"
+      allOf:
+      - $ref: "#/components/schemas/ErrorResponse"
     NotFoundError:
-      required:
-      - error
-      type: object
-      properties:
-        error:
-          $ref: "#/components/schemas/NotFoundError_error"
+      allOf:
+      - $ref: "#/components/schemas/ErrorResponse"
     ConflictError:
-      required:
-      - error
-      type: object
-      properties:
-        error:
-          $ref: "#/components/schemas/ConflictError_error"
+      allOf:
+      - $ref: "#/components/schemas/ErrorResponse"
     InternalServerError:
-      required:
-      - error
-      type: object
-      properties:
-        error:
-          $ref: "#/components/schemas/InternalServerError_error"
+      allOf:
+      - $ref: "#/components/schemas/ErrorResponse"
     LoginRequest:
       required:
-      - email
+      - username
       - password
       type: object
       properties:
-        email:
+        username:
           type: string
-          format: email
           example: user@example.com
         password:
           type: string
           format: password
           example: securePassword123
-    LoginResponse:
+    TokenResponse:
       required:
-      - message
+      - access_token
       type: object
       properties:
-        message:
+        access_token:
           type: string
-          example: Успешный вход в систему
+        token_type:
+          type: string
+          default: bearer
     RegisterRequest:
       required:
       - email
@@ -2224,23 +2161,22 @@ components:
         message:
           type: string
           example: Пользователь успешно зарегистрирован
-    LogoutResponse:
+    SuccessResponse:
       required:
-      - message
+      - success
       type: object
       properties:
-        message:
-          type: string
-          example: Успешный выход из системы
-        status:
-          type: string
-          example: "success"
+        success:
+          type: boolean
+          default: true
     User:
       required:
       - created_at
       - email
       - id
+      - is_active
       - name
+      - status
       type: object
       properties:
         id:
@@ -2256,6 +2192,15 @@ components:
           type: string
           format: email
           example: user@example.com
+        is_active:
+          type: boolean
+          default: true
+        status:
+          type: string
+          enum:
+          - CREATED
+          - CONFIRMED
+          default: CREATED
         created_at:
           type: string
           format: date-time
@@ -2332,7 +2277,6 @@ components:
     ProjectCreate:
       required:
       - name
-      - is_imported
       type: object
       properties:
         name:
@@ -2348,7 +2292,6 @@ components:
     ProjectUpdate:
       required:
         - name
-        - is_imported
       type: object
       properties:
         name:
@@ -2424,21 +2367,17 @@ components:
     Tile:
       required:
       - id
-      - window_id
       type: object
       properties:
         id:
           type: string
           format: uuid
-        is_correct:
-          type: boolean
-          default: false
-        position_x:
+        x:
           type: integer
-          example: 100
-        position_y:
+          default: 0
+        y:
           type: integer
-          example: 150
+          default: 0
         width:
           type: integer
           default: 200
@@ -2452,22 +2391,14 @@ components:
           type: string
           format: date-time
     TileCreate:
-      required:
-      - id
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        is_correct:
-          type: boolean
-          default: false
-        position_x:
+        x:
           type: integer
-          example: 100
-        position_y:
+          default: 0
+        y:
           type: integer
-          example: 150
+          default: 0
         width:
           type: integer
           default: 200
@@ -2477,23 +2408,24 @@ components:
     TileUpdate:
       type: object
       properties:
-        is_correct:
-          type: boolean
-          default: false
-        position_x:
+        x:
           type: integer
-        position_y:
+          default: 0
+        y:
           type: integer
+          default: 0
         width:
           type: integer
+          default: 200
         height:
           type: integer
+          default: 150
     Class:
       required:
       - id
       - name
       - window_id
-      - tile_id
+      - tile
       type: object
       properties:
         id:
@@ -2511,15 +2443,15 @@ components:
           - public
           - private
           - protected
+          - default
         is_abstract:
           type: boolean
           default: false
         window_id:
           type: string
           format: uuid
-        tile_id:
-          type: string
-          format: uuid
+        tile:
+          $ref: "#/components/schemas/Tile"
         created_at:
           type: string
           format: date-time
@@ -2542,13 +2474,16 @@ components:
           - public
           - private
           - protected
-          default: public
+          - default
         is_abstract:
           type: boolean
           default: false
+        tile:
+          $ref: "#/components/schemas/TileCreate"
     ClassUpdate:
       required:
         - name
+        - tile
       type: object
       properties:
         name:
@@ -2561,14 +2496,17 @@ components:
           - public
           - private
           - protected
+          - default
         is_abstract:
           type: boolean
+        tile:
+          $ref: "#/components/schemas/TileUpdate"
     Interface:
       required:
       - id
       - name
       - window_id
-      - tile_id
+      - tile
       type: object
       properties:
         id:
@@ -2578,12 +2516,11 @@ components:
           maxLength: 100
           type: string
           example: UserRepository
-        tile_id:
-          type: string
-          format: uuid
         window_id:
           type: string
           format: uuid
+        tile:
+          $ref: "#/components/schemas/Tile"
         created_at:
           type: string
           format: date-time
@@ -2599,14 +2536,19 @@ components:
           maxLength: 100
           type: string
           example: NewInterface
+        tile:
+          $ref: "#/components/schemas/TileCreate"
     InterfaceUpdate:
       required:
         - name
+        - tile
       type: object
       properties:
         name:
           maxLength: 100
           type: string
+        tile:
+          $ref: "#/components/schemas/TileUpdate"
     Attribute:
       required:
       - id
@@ -2628,7 +2570,7 @@ components:
           - public
           - private
           - protected
-          default: public
+          - default
         type:
           maxLength: 100
           type: string
@@ -2646,10 +2588,6 @@ components:
           nullable: true
           example: '"guest"'
         class_id:
-          type: string
-          format: uuid
-          nullable: true
-        interface_id:
           type: string
           format: uuid
           nullable: true
@@ -2676,7 +2614,7 @@ components:
           - public
           - private
           - protected
-          default: public
+          - default
         type:
           maxLength: 100
           type: string
@@ -2706,6 +2644,7 @@ components:
           - public
           - private
           - protected
+          - default
         type:
           maxLength: 100
           type: string
@@ -2720,6 +2659,7 @@ components:
       required:
       - name
       - type
+      - order_num
       type: object
       properties:
         name:
@@ -2728,6 +2668,9 @@ components:
         type:
           type: string
           example: int
+        order_num:
+          type: integer
+          minimum: 0
         default_value:
           type: string
           nullable: true
@@ -2753,7 +2696,7 @@ components:
           - public
           - private
           - protected
-          default: public
+          - default
         return_type:
           maxLength: 100
           type: string
@@ -2767,7 +2710,7 @@ components:
         is_abstract:
           type: boolean
           default: false
-        parameters:
+        arguments:
           type: array
           items:
             $ref: "#/components/schemas/MethodArgument"
@@ -2802,7 +2745,7 @@ components:
           - public
           - private
           - protected
-          default: public
+          - default
         return_type:
           maxLength: 100
           type: string
@@ -2816,7 +2759,7 @@ components:
         is_abstract:
           type: boolean
           default: false
-        parameters:
+        arguments:
           type: array
           items:
             $ref: "#/components/schemas/MethodArgument"
@@ -2836,6 +2779,7 @@ components:
           - public
           - private
           - protected
+          - default
         return_type:
           maxLength: 100
           type: string
@@ -2845,13 +2789,14 @@ components:
           type: boolean
         is_abstract:
           type: boolean
-        parameters:
+        arguments:
           type: array
           items:
             $ref: "#/components/schemas/MethodArgument"
     Relation:
       required:
       - id
+      - name
       - begin_type
       - end_type
       - type
@@ -2861,6 +2806,9 @@ components:
         id:
           type: string
           format: uuid
+        name:
+          maxLength: 100
+          type: string
         type:
           type: string
           enum:
@@ -2869,18 +2817,23 @@ components:
         begin_class_id:
           type: string
           format: uuid
+          nullable: true
         end_class_id:
           type: string
           format: uuid
+          nullable: true
         begin_interface_id:
           type: string
           format: uuid
+          nullable: true
         end_interface_id:
           type: string
           format: uuid
+          nullable: true
         begin_type:
           type: string
           enum:
+            - relation
             - one
             - many
             - one_only_one
@@ -2891,6 +2844,7 @@ components:
         end_type:
           type: string
           enum:
+            - relation
             - one
             - many
             - one_only_one
@@ -2909,11 +2863,12 @@ components:
           format: date-time
     RelationCreate:
       required:
-      - begin_type
-      - end_type
-      - type
+      - name
       type: object
       properties:
+        name:
+          maxLength: 100
+          type: string
         type:
           type: string
           enum:
@@ -2922,18 +2877,23 @@ components:
         begin_class_id:
           type: string
           format: uuid
+          nullable: true
         end_class_id:
           type: string
           format: uuid
+          nullable: true
         begin_interface_id:
           type: string
           format: uuid
+          nullable: true
         end_interface_id:
           type: string
           format: uuid
+          nullable: true
         begin_type:
           type: string
           enum:
+            - relation
             - one
             - many
             - one_only_one
@@ -2944,6 +2904,7 @@ components:
         end_type:
           type: string
           enum:
+            - relation
             - one
             - many
             - one_only_one
@@ -2953,11 +2914,12 @@ components:
           nullable: true
     RelationUpdate:
       required:
-        - begin_type
-        - end_type
-        - type
+        - name
       type: object
       properties:
+        name:
+          maxLength: 100
+          type: string
         type:
           type: string
           enum:
@@ -2966,6 +2928,7 @@ components:
         begin_type:
           type: string
           enum:
+            - relation
             - one
             - many
             - one_only_one
@@ -2976,6 +2939,7 @@ components:
         end_type:
           type: string
           enum:
+            - relation
             - one
             - many
             - one_only_one
@@ -2983,41 +2947,89 @@ components:
             - zero_or_one
             - zero_or_many
           nullable: true
+        begin_class_id:
+          type: string
+          format: uuid
+          nullable: true
+        end_class_id:
+          type: string
+          format: uuid
+          nullable: true
+        begin_interface_id:
+          type: string
+          format: uuid
+          nullable: true
+        end_interface_id:
+          type: string
+          format: uuid
+          nullable: true
+    AccountConfirmationRequest:
+      type: object
+      required:
+        - user_id
+        - code
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+    PasswordResetRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+    UpdateUserRolesRequest:
+      type: object
+      required:
+        - roles
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
     ChangePasswordRequest:
       type: object
       required:
-        - current_password
-        - new_password
-        - confirm_password
+        - user_id
+        - code
+        - password
+        - password_confirm
       properties:
-        current_password:
+        user_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        password:
           type: string
           format: password
-          description: Текущий пароль пользователя
-          example: "oldPassword123"
-          minLength: 8
-        new_password:
+          minLength: 6
+          maxLength: 50
+        password_confirm:
           type: string
           format: password
-          description: Новый пароль
-          example: "newPassword456"
-          minLength: 8
-        confirm_password:
-          type: string
-          format: password
-          description: Подтверждение нового пароля
-          example: "newPassword456"
-          minLength: 8
-    ChangePasswordResponse:
+          minLength: 6
+          maxLength: 50
+    CodeGenerationResponse:
       type: object
+      required:
+      - files
       properties:
-        message:
+        files:
+          type: object
+          additionalProperties:
+            type: string
+        files_count:
+          type: integer
+        summary:
           type: string
-          description: Сообщение об успешной смене пароля
-          example: "Password changed successfully"
-        status:
-          type: string
-          example: "success"
+    CodeGenerationValidationError:
+      allOf:
+      - $ref: "#/components/schemas/ErrorResponse"
     PaginatedResponse:
       required:
       - data
@@ -3228,6 +3240,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+    CodeGenerationValidationError:
+      description: Диаграмма не прошла бизнес-валидацию для генерации кода
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CodeGenerationValidationError"
     InternalServerError:
       description: Внутренняя ошибка сервера
       content:
@@ -3254,16 +3272,24 @@ components:
         minimum: 1
         type: integer
         default: 20
-    IdParam:
-      name: id
+    RelationIdParam:
+      name: relation_id
       in: path
       description: Уникальный идентификатор ресурса
       required: true
       schema:
         type: string
         format: uuid
+    UserIdParam:
+      name: user_id
+      in: path
+      description: ID пользователя
+      required: true
+      schema:
+        type: string
+        format: uuid
     ProjectIdParam:
-      name: projectId
+      name: project_id
       in: path
       description: ID проекта
       required: true
@@ -3271,7 +3297,7 @@ components:
         type: string
         format: uuid
     WindowIdParam:
-      name: windowId
+      name: window_id
       in: path
       description: ID окна
       required: true
@@ -3279,7 +3305,7 @@ components:
         type: string
         format: uuid
     ClassIdParam:
-      name: classId
+      name: class_id
       in: path
       description: ID класса
       required: true
@@ -3287,7 +3313,7 @@ components:
         type: string
         format: uuid
     InterfaceIdParam:
-      name: interfaceId
+      name: interface_id
       in: path
       description: ID интерфейса
       required: true
@@ -3295,7 +3321,7 @@ components:
         type: string
         format: uuid
     AttributeIdParam:
-      name: attributeId
+      name: attribute_id
       in: path
       description: ID атрибута
       required: true
@@ -3303,7 +3329,7 @@ components:
         type: string
         format: uuid
     MethodIdParam:
-      name: methodId
+      name: method_id
       in: path
       description: ID метода
       required: true
