@@ -823,7 +823,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "422":
-          $ref: "#/components/responses/ValidationError"
+          $ref: "#/components/responses/CodeGenerationValidationError"
         "500":
           $ref: "#/components/responses/InternalServerError"
       security:
@@ -3027,6 +3027,9 @@ components:
           type: integer
         summary:
           type: string
+    CodeGenerationValidationError:
+      allOf:
+      - $ref: "#/components/schemas/ErrorResponse"
     PaginatedResponse:
       required:
       - data
@@ -3237,6 +3240,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+    CodeGenerationValidationError:
+      description: Диаграмма не прошла бизнес-валидацию для генерации кода
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CodeGenerationValidationError"
     InternalServerError:
       description: Внутренняя ошибка сервера
       content:
