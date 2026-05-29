@@ -1,30 +1,27 @@
-import keyword
 from collections import Counter, defaultdict
 from uuid import UUID
 
-from app.models import (
-    AccessModifier,
-    ClassModel,
-    InterfaceModel,
-    MethodModel,
-    RelationKind,
-    RelationModel,
-)
+from app.models import MethodModel, RelationKind, RelationModel
+from app.services.code_generation_java_validator import JavaCodeGenerationValidator
+from app.services.code_generation_python_validator import PythonCodeGenerationValidator
 from app.services.uml_graph_preloader import UMLGraph
 from app.utils.generator_factory import TargetLanguage
-from app.utils.uml_analyzer import UMLGraphAnalyzer
 
 NodeKey = tuple[str, UUID]
 
 
 class CodeGenerationValidator:
+    def __init__(self) -> None:
+        self._java_validator = JavaCodeGenerationValidator()
+        self._python_validator = PythonCodeGenerationValidator()
+
     def validate(self, graph: UMLGraph, language: TargetLanguage) -> list[str]:
         errors = self._validate_common(graph)
 
         if language == TargetLanguage.JAVA:
-            errors.extend(self._validate_java(graph))
+            errors.extend(self._java_validator.validate(graph))
         elif language == TargetLanguage.PYTHON:
-            errors.extend(self._validate_python(graph))
+            errors.extend(self._python_validator.validate(graph))
 
         return errors
 
@@ -36,332 +33,6 @@ class CodeGenerationValidator:
         errors.extend(self._validate_methods(graph))
         errors.extend(self._validate_relations(graph))
         errors.extend(self._validate_realization_cycles(graph))
-
-        return errors
-
-    def _validate_java(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-
-        errors.extend(self._validate_java_classes(graph))
-        errors.extend(self._validate_java_interface_methods(graph))
-        errors.extend(self._validate_java_interface_implementations(graph))
-
-        return errors
-
-    def _validate_python(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-
-        errors.extend(self._validate_python_identifiers(graph))
-        errors.extend(self._validate_python_method_names(graph))
-        errors.extend(self._validate_python_parents(graph))
-
-        return errors
-
-    def _validate_python_identifiers(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-
-        for class_model in graph.classes:
-            if not self._is_python_identifier(class_model.name):
-                errors.append(
-                    f'Python class name {class_model.name} must be a valid identifier'
-                )
-
-            errors.extend(self._validate_python_attributes(class_model))
-
-            for method in class_model.methods:
-                errors.extend(
-                    self._validate_python_method_identifiers(
-                        owner_name=f'class {class_model.name}',
-                        method=method,
-                    )
-                )
-
-        for interface in graph.interfaces:
-            if not self._is_python_identifier(interface.name):
-                errors.append(
-                    f'Python interface name {interface.name} must be a valid identifier'
-                )
-
-            for method in interface.methods:
-                errors.extend(
-                    self._validate_python_method_identifiers(
-                        owner_name=f'interface {interface.name}',
-                        method=method,
-                    )
-                )
-
-        return errors
-
-    def _validate_python_attributes(self, class_model: ClassModel) -> list[str]:
-        errors: list[str] = []
-        mapped_names: Counter[str] = Counter()
-
-        for attribute in class_model.attributes:
-            mapped_name = self._python_attribute_name(
-                modifier=attribute.access_modifier,
-                name=attribute.name,
-            )
-
-            if not self._is_python_identifier(mapped_name):
-                errors.append(
-                    f'Python attribute name {attribute.name} in class '
-                    f'{class_model.name} must produce a valid identifier'
-                )
-
-            mapped_names[mapped_name] += 1
-
-        for mapped_name, count in mapped_names.items():
-            if count > 1:
-                errors.append(
-                    f'Duplicate generated Python attribute name {mapped_name} '
-                    f'in class {class_model.name}'
-                )
-
-        return errors
-
-    def _validate_python_method_identifiers(
-        self,
-        *,
-        owner_name: str,
-        method: MethodModel,
-    ) -> list[str]:
-        errors: list[str] = []
-
-        if not self._is_python_identifier(method.name):
-            errors.append(
-                f'Python method name {method.name} in {owner_name} must be a '
-                'valid identifier'
-            )
-
-        for argument in method.arguments:
-            if argument.name == 'self':
-                errors.append(
-                    f'Python argument self in method {method.name} of {owner_name} '
-                    'conflicts with generated self parameter'
-                )
-            elif not self._is_python_identifier(argument.name):
-                errors.append(
-                    f'Python argument name {argument.name} in method {method.name} '
-                    f'of {owner_name} must be a valid identifier'
-                )
-
-        return errors
-
-    def _validate_python_method_names(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-
-        for class_model in graph.classes:
-            errors.extend(
-                self._validate_python_owner_method_names(
-                    owner_name=f'class {class_model.name}',
-                    methods=class_model.methods,
-                )
-            )
-
-        for interface in graph.interfaces:
-            errors.extend(
-                self._validate_python_owner_method_names(
-                    owner_name=f'interface {interface.name}',
-                    methods=interface.methods,
-                )
-            )
-
-        return errors
-
-    def _validate_python_owner_method_names(
-        self,
-        *,
-        owner_name: str,
-        methods: list[MethodModel],
-    ) -> list[str]:
-        errors: list[str] = []
-        method_names: Counter[str] = Counter(method.name for method in methods)
-
-        for method_name, count in method_names.items():
-            if count > 1:
-                errors.append(
-                    f'Duplicate Python method name {method_name} in {owner_name}'
-                )
-
-        return errors
-
-    def _validate_python_parents(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-        analyzer = UMLGraphAnalyzer(graph)
-
-        for class_model in graph.classes:
-            parent_names: list[str] = []
-            parent_class = analyzer.get_parent_class(class_model)
-
-            if parent_class is not None:
-                parent_names.append(parent_class.name)
-
-            parent_names.extend(
-                interface.name
-                for interface in analyzer.get_parent_interfaces(class_model)
-            )
-
-            errors.extend(
-                self._validate_python_parent_names(
-                    owner_name=f'class {class_model.name}',
-                    parent_names=parent_names,
-                )
-            )
-
-        for interface in graph.interfaces:
-            parent_names = [
-                parent.name for parent in analyzer.get_parent_interfaces(interface)
-            ]
-            errors.extend(
-                self._validate_python_parent_names(
-                    owner_name=f'interface {interface.name}',
-                    parent_names=parent_names,
-                )
-            )
-
-        return errors
-
-    def _validate_python_parent_names(
-        self,
-        *,
-        owner_name: str,
-        parent_names: list[str],
-    ) -> list[str]:
-        errors: list[str] = []
-        parent_name_counts: Counter[str] = Counter(parent_names)
-
-        for parent_name in parent_names:
-            if not self._is_python_identifier(parent_name):
-                errors.append(
-                    f'Python parent name {parent_name} for {owner_name} must be '
-                    'a valid identifier'
-                )
-
-        for parent_name, count in parent_name_counts.items():
-            if count > 1:
-                errors.append(f'Duplicate Python parent {parent_name} for {owner_name}')
-
-        return errors
-
-    def _validate_java_classes(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-
-        for class_model in graph.classes:
-            if class_model.access_modifier in (
-                AccessModifier.PRIVATE,
-                AccessModifier.PROTECTED,
-            ):
-                errors.append(
-                    f'Java top-level class {class_model.name} cannot be '
-                    f'{class_model.access_modifier.value}'
-                )
-
-            for method in class_model.methods:
-                errors.extend(self._validate_java_class_method(class_model, method))
-
-        return errors
-
-    def _validate_java_class_method(
-        self,
-        class_model: ClassModel,
-        method: MethodModel,
-    ) -> list[str]:
-        errors: list[str] = []
-        method_name = f'method {method.name} in class {class_model.name}'
-
-        if method.is_abstract and not class_model.is_abstract:
-            errors.append(
-                f'Java {method_name} is abstract, but class {class_model.name} '
-                'is not abstract'
-            )
-
-        if method.is_abstract and method.access_modifier == AccessModifier.PRIVATE:
-            errors.append(f'Java abstract {method_name} cannot be private')
-
-        if method.is_abstract and method.is_final:
-            errors.append(f'Java abstract {method_name} cannot be final')
-
-        if method.is_abstract and method.is_static:
-            errors.append(f'Java abstract {method_name} cannot be static')
-
-        return errors
-
-    def _validate_java_interface_methods(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-
-        for interface in graph.interfaces:
-            for method in interface.methods:
-                method_name = f'method {method.name} in interface {interface.name}'
-
-                if method.access_modifier != AccessModifier.PUBLIC:
-                    errors.append(f'Java interface {method_name} must be public')
-
-                if method.is_final:
-                    errors.append(f'Java interface {method_name} cannot be final')
-
-                if method.is_static:
-                    errors.append(f'Java interface {method_name} cannot be static')
-
-        return errors
-
-    def _validate_java_interface_implementations(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-        analyzer = UMLGraphAnalyzer(graph)
-
-        for class_model in graph.classes:
-            implemented_interfaces = analyzer.get_parent_interfaces(class_model)
-            if not implemented_interfaces:
-                continue
-
-            class_methods = {
-                self._method_signature(method): method for method in class_model.methods
-            }
-
-            for interface in implemented_interfaces:
-                errors.extend(
-                    self._validate_java_interface_implementation(
-                        class_model=class_model,
-                        interface=interface,
-                        class_methods=class_methods,
-                    )
-                )
-
-        return errors
-
-    def _validate_java_interface_implementation(
-        self,
-        *,
-        class_model: ClassModel,
-        interface: InterfaceModel,
-        class_methods: dict[str, MethodModel],
-    ) -> list[str]:
-        errors: list[str] = []
-
-        for interface_method in interface.methods:
-            signature = self._method_signature(interface_method)
-            class_method = class_methods.get(signature)
-
-            if class_method is None:
-                continue
-
-            if class_method.return_type != interface_method.return_type:
-                errors.append(
-                    f'Java method {class_method.name} in class {class_model.name} '
-                    f'must return {interface_method.return_type} to implement '
-                    f'interface {interface.name}'
-                )
-
-            if class_method.access_modifier != AccessModifier.PUBLIC:
-                errors.append(
-                    f'Java method {class_method.name} in class {class_model.name} '
-                    f'must be public to implement interface {interface.name}'
-                )
-
-            if class_method.is_static:
-                errors.append(
-                    f'Java static method {class_method.name} in class '
-                    f'{class_model.name} cannot implement interface {interface.name}'
-                )
 
         return errors
 
@@ -628,26 +299,6 @@ class CodeGenerationValidator:
         arguments = sorted(method.arguments, key=lambda argument: argument.order_num)
         argument_types = ','.join(argument.type for argument in arguments)
         return f'{method.name}({argument_types})'
-
-    def _python_attribute_name(
-        self,
-        *,
-        modifier: AccessModifier | None,
-        name: str,
-    ) -> str:
-        if modifier == AccessModifier.PRIVATE:
-            return f'__{name}'
-
-        if modifier == AccessModifier.PROTECTED:
-            return f'_{name}'
-
-        return name
-
-    def _is_python_identifier(self, value: str | None) -> bool:
-        if self._is_blank(value):
-            return False
-
-        return value.isidentifier() and not keyword.iskeyword(value)
 
     def _is_blank(self, value: str | None) -> bool:
         return value is None or value.strip() == ''
