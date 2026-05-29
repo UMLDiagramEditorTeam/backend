@@ -59,12 +59,18 @@ paths:
       tags:
       - Auth
       summary: Подтверждение аккаунта
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AccountConfirmationRequest"
+      parameters:
+      - name: user_id
+        in: query
         required: true
+        schema:
+          type: string
+          format: uuid
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Аккаунт подтвержден
@@ -183,6 +189,18 @@ paths:
       tags:
         - Auth
       summary: Смена пароля пользователя
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -2963,17 +2981,6 @@ components:
           type: string
           format: uuid
           nullable: true
-    AccountConfirmationRequest:
-      type: object
-      required:
-        - user_id
-        - code
-      properties:
-        user_id:
-          type: string
-          format: uuid
-        code:
-          type: string
     PasswordResetRequest:
       type: object
       required:
@@ -2994,16 +3001,9 @@ components:
     ChangePasswordRequest:
       type: object
       required:
-        - user_id
-        - code
         - password
         - password_confirm
       properties:
-        user_id:
-          type: string
-          format: uuid
-        code:
-          type: string
         password:
           type: string
           format: password
