@@ -1,9 +1,17 @@
 from collections import Counter, defaultdict
 from uuid import UUID
 
-from app.models import MethodModel, RelationKind, RelationModel
+from app.models import (
+    AccessModifier,
+    ClassModel,
+    InterfaceModel,
+    MethodModel,
+    RelationKind,
+    RelationModel,
+)
 from app.services.uml_graph_preloader import UMLGraph
 from app.utils.generator_factory import TargetLanguage
+from app.utils.uml_analyzer import UMLGraphAnalyzer
 
 NodeKey = tuple[str, UUID]
 
@@ -30,11 +38,139 @@ class CodeGenerationValidator:
 
         return errors
 
-    def _validate_java(self, _graph: UMLGraph) -> list[str]:
-        return []
+    def _validate_java(self, graph: UMLGraph) -> list[str]:
+        errors: list[str] = []
+
+        errors.extend(self._validate_java_classes(graph))
+        errors.extend(self._validate_java_interface_methods(graph))
+        errors.extend(self._validate_java_interface_implementations(graph))
+
+        return errors
 
     def _validate_python(self, _graph: UMLGraph) -> list[str]:
         return []
+
+    def _validate_java_classes(self, graph: UMLGraph) -> list[str]:
+        errors: list[str] = []
+
+        for class_model in graph.classes:
+            if class_model.access_modifier in (
+                AccessModifier.PRIVATE,
+                AccessModifier.PROTECTED,
+            ):
+                errors.append(
+                    f'Java top-level class {class_model.name} cannot be '
+                    f'{class_model.access_modifier.value}'
+                )
+
+            for method in class_model.methods:
+                errors.extend(self._validate_java_class_method(class_model, method))
+
+        return errors
+
+    def _validate_java_class_method(
+        self,
+        class_model: ClassModel,
+        method: MethodModel,
+    ) -> list[str]:
+        errors: list[str] = []
+        method_name = f'method {method.name} in class {class_model.name}'
+
+        if method.is_abstract and not class_model.is_abstract:
+            errors.append(
+                f'Java {method_name} is abstract, but class {class_model.name} '
+                'is not abstract'
+            )
+
+        if method.is_abstract and method.access_modifier == AccessModifier.PRIVATE:
+            errors.append(f'Java abstract {method_name} cannot be private')
+
+        if method.is_abstract and method.is_final:
+            errors.append(f'Java abstract {method_name} cannot be final')
+
+        if method.is_abstract and method.is_static:
+            errors.append(f'Java abstract {method_name} cannot be static')
+
+        return errors
+
+    def _validate_java_interface_methods(self, graph: UMLGraph) -> list[str]:
+        errors: list[str] = []
+
+        for interface in graph.interfaces:
+            for method in interface.methods:
+                method_name = f'method {method.name} in interface {interface.name}'
+
+                if method.access_modifier != AccessModifier.PUBLIC:
+                    errors.append(f'Java interface {method_name} must be public')
+
+                if method.is_final:
+                    errors.append(f'Java interface {method_name} cannot be final')
+
+                if method.is_static:
+                    errors.append(f'Java interface {method_name} cannot be static')
+
+        return errors
+
+    def _validate_java_interface_implementations(self, graph: UMLGraph) -> list[str]:
+        errors: list[str] = []
+        analyzer = UMLGraphAnalyzer(graph)
+
+        for class_model in graph.classes:
+            implemented_interfaces = analyzer.get_parent_interfaces(class_model)
+            if not implemented_interfaces:
+                continue
+
+            class_methods = {
+                self._method_signature(method): method for method in class_model.methods
+            }
+
+            for interface in implemented_interfaces:
+                errors.extend(
+                    self._validate_java_interface_implementation(
+                        class_model=class_model,
+                        interface=interface,
+                        class_methods=class_methods,
+                    )
+                )
+
+        return errors
+
+    def _validate_java_interface_implementation(
+        self,
+        *,
+        class_model: ClassModel,
+        interface: InterfaceModel,
+        class_methods: dict[str, MethodModel],
+    ) -> list[str]:
+        errors: list[str] = []
+
+        for interface_method in interface.methods:
+            signature = self._method_signature(interface_method)
+            class_method = class_methods.get(signature)
+
+            if class_method is None:
+                continue
+
+            if class_method.return_type != interface_method.return_type:
+                errors.append(
+                    f'Java method {class_method.name} in class {class_model.name} '
+                    f'must return {interface_method.return_type} to implement '
+                    f'interface {interface.name}'
+                )
+
+            if class_method.access_modifier != AccessModifier.PUBLIC:
+                errors.append(
+                    f'Java method {class_method.name} in class {class_model.name} '
+                    f'must be public to implement interface {interface.name}'
+                )
+
+            if class_method.is_static:
+                errors.append(
+                    f'Java static method {class_method.name} in class '
+                    f'{class_model.name} cannot implement interface {interface.name}'
+                )
+
+        return errors
 
     def _validate_names(self, graph: UMLGraph) -> list[str]:
         errors: list[str] = []
