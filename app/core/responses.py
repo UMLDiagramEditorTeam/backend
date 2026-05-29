@@ -1,5 +1,6 @@
 from app.schemas.errors import (
     BadRequestsSchema,
+    CodeGenerationValidationErrorSchema,
     ConflictErrorSchema,
     ForbiddenErrorSchema,
     InternalServerErrorSchema,
@@ -28,6 +29,10 @@ detail_responses = {404: {'model': NotFoundErrorSchema}}
 
 conflict_responses = {
     409: {'model': ConflictErrorSchema},
+}
+
+code_generation_validation_responses = {
+    422: {'model': CodeGenerationValidationErrorSchema},
 }
 
 common_responses = {500: {'model': InternalServerErrorSchema}}

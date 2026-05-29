@@ -44,3 +44,11 @@ class BadRequestError(Exception):
     def __init__(self, message: str = None):
         self.message = message if message is not None else self.message
         super().__init__(self.message)
+
+
+class CodeGenerationValidationError(Exception):
+    message = 'Ошибка валидации схемы'
+
+    def __init__(self, detail: list[str]):
+        self.detail = detail
+        super().__init__(self.message)
