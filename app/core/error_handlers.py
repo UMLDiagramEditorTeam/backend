@@ -6,6 +6,7 @@ from jwt import PyJWTError
 from app.core.responses import (
     auth_responses,
     bad_request_responses,
+    code_generation_validation_responses,
     common_responses,
     conflict_responses,
     detail_responses,
@@ -57,6 +58,7 @@ async def exception_handler(
         **detail_responses,
         **conflict_responses,
         **bad_request_responses,
+        **code_generation_validation_responses,
     }
 
     for code, config in responses.items():
