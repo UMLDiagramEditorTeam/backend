@@ -2,6 +2,7 @@ from collections import Counter, defaultdict
 from uuid import UUID
 
 from app.models import MethodModel, RelationKind, RelationModel
+from app.services.base_code_generation_validator import BaseCodeGenerationValidator
 from app.services.code_generation_java_validator import JavaCodeGenerationValidator
 from app.services.code_generation_python_validator import PythonCodeGenerationValidator
 from app.services.uml_graph_preloader import UMLGraph
@@ -12,16 +13,17 @@ NodeKey = tuple[str, UUID]
 
 class CodeGenerationValidator:
     def __init__(self) -> None:
-        self._java_validator = JavaCodeGenerationValidator()
-        self._python_validator = PythonCodeGenerationValidator()
+        self._language_validators: dict[TargetLanguage, BaseCodeGenerationValidator] = {
+            TargetLanguage.JAVA: JavaCodeGenerationValidator(),
+            TargetLanguage.PYTHON: PythonCodeGenerationValidator(),
+        }
 
     def validate(self, graph: UMLGraph, language: TargetLanguage) -> list[str]:
         errors = self._validate_common(graph)
 
-        if language == TargetLanguage.JAVA:
-            errors.extend(self._java_validator.validate(graph))
-        elif language == TargetLanguage.PYTHON:
-            errors.extend(self._python_validator.validate(graph))
+        language_validator = self._language_validators.get(language)
+        if language_validator is not None:
+            errors.extend(language_validator.validate(graph))
 
         return errors
 

@@ -1,17 +1,17 @@
 from app.models import AccessModifier, ClassModel, InterfaceModel, MethodModel
+from app.services.base_code_generation_validator import BaseCodeGenerationValidator
 from app.services.uml_graph_preloader import UMLGraph
 from app.utils.uml_analyzer import UMLGraphAnalyzer
 
 
-class JavaCodeGenerationValidator:
+class JavaCodeGenerationValidator(BaseCodeGenerationValidator):
     def validate(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-
-        errors.extend(self._validate_classes(graph))
-        errors.extend(self._validate_interface_methods(graph))
-        errors.extend(self._validate_interface_implementations(graph))
-
-        return errors
+        return self._collect_errors(
+            graph,
+            self._validate_classes,
+            self._validate_interface_methods,
+            self._validate_interface_implementations,
+        )
 
     def _validate_classes(self, graph: UMLGraph) -> list[str]:
         errors: list[str] = []

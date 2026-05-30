@@ -2,19 +2,19 @@ import keyword
 from collections import Counter
 
 from app.models import AccessModifier, ClassModel, MethodModel
+from app.services.base_code_generation_validator import BaseCodeGenerationValidator
 from app.services.uml_graph_preloader import UMLGraph
 from app.utils.uml_analyzer import UMLGraphAnalyzer
 
 
-class PythonCodeGenerationValidator:
+class PythonCodeGenerationValidator(BaseCodeGenerationValidator):
     def validate(self, graph: UMLGraph) -> list[str]:
-        errors: list[str] = []
-
-        errors.extend(self._validate_identifiers(graph))
-        errors.extend(self._validate_method_names(graph))
-        errors.extend(self._validate_parents(graph))
-
-        return errors
+        return self._collect_errors(
+            graph,
+            self._validate_identifiers,
+            self._validate_method_names,
+            self._validate_parents,
+        )
 
     def _validate_identifiers(self, graph: UMLGraph) -> list[str]:
         errors: list[str] = []
