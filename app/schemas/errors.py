@@ -5,6 +5,7 @@ from sqlmodel import SQLModel
 
 from app.core.errors import (
     BadRequestError,
+    CodeGenerationValidationError,
     ConflictError,
     ForbiddenError,
     InternalServerError,
@@ -32,6 +33,11 @@ class ValidationErrorItem(SQLModel):
 class BadRequestsSchema(ErrorSchema):
     _error_cls: type[Exception] = BadRequestError
     message: str = BadRequestError.message
+
+
+class CodeGenerationValidationErrorSchema(ErrorSchema):
+    _error_cls: type[Exception] = CodeGenerationValidationError
+    message: str = CodeGenerationValidationError.message
 
 
 class UnauthorizedErrorSchema(ErrorSchema):
