@@ -1,7 +1,7 @@
 name: uml-diagram-editor
 
 x-back-image: &back-image
-  image: ropoy/uml-diagram-editor-api:latest
+  image: umldiagrameditor/uml-diagram-editor-api:latest
 
 x-front-image: &front-image
   image: nginx:stable-alpine
@@ -16,6 +16,7 @@ x-back-base: &back-base
 services:
   db:
     image: postgres:18-alpine
+    container_name: uml-diagram-editor-db
     restart: always
     env_file:
       - .env
@@ -24,7 +25,8 @@ services:
       POSTGRES_PASSWORD: ${DB__PASSWORD}
       POSTGRES_DB: ${DB__NAME}
     volumes:
-      - pg_data:/var/lib/postgresql
+      - uml-diagram_editor-pg_data:/var/lib/postgresql
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -34,20 +36,25 @@ services:
 
   alembic:
     <<: *back-base
+    container_name: uml-diagram-editor-alembic
     restart: on-failure
     depends_on:
       db:
         condition: service_healthy
     command: ["alembic", "upgrade", "head"]
+
   rbac:
     <<: *back-base
+    container_name: uml-diagram-editor-rbac
     restart: on-failure
     depends_on:
       alembic:
         condition: service_completed_successfully
     command: ["python3", "init.py"]
+
   api:
     <<: *back-base
+    container_name: uml-diagram-editor-api
     depends_on:
       rbac:
         condition: service_completed_successfully
@@ -60,6 +67,7 @@ services:
       start_period: 10s
   web:
     <<: *front-image
+    container_name: uml-diagram-editor-web
     restart: always
     ports:
       - "80:80"
@@ -71,4 +79,4 @@ services:
         condition: service_healthy
 
 volumes:
-  pg_data:
+  uml-diagram_editor-pg_data:

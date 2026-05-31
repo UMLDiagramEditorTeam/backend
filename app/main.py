@@ -48,7 +48,7 @@ app.add_exception_handler(exc_class_or_status_code=Exception, handler=exception_
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.common.host],
+    allow_origins=[settings.common.host, settings.frontend.origin],
     allow_credentials=True,
     allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allow_headers=['Authorization', 'Content-Type', 'X-Requested-With'],

@@ -25,7 +25,7 @@ from app.models.email_notifications import (
 )
 from app.models.refresh_sessions import RefreshSessionCreate
 from app.models.users import UserCreate, UserModel, UserStatus
-from app.schemas.auth import PasswordChangeRequest, TokenPair
+from app.schemas.auth import ConfirmationRequest, PasswordChangeRequest, TokenPair
 from app.services.hasher import hash_password, verify_password
 from app.services.jwt_service import (
     create_access_token,
@@ -211,17 +211,19 @@ class AuthService:
             code=code,
         )
 
-    async def change_password(self, request: PasswordChangeRequest) -> None:
+    async def change_password(
+        self, params: ConfirmationRequest, request: PasswordChangeRequest
+    ) -> None:
         if request.password != request.password_confirm:
             raise BadRequestError('Пароль не совпадает')
 
-        user = await self._user_repository.get(request.user_id)
+        user = await self._user_repository.get(params.user_id)
         if user is None:
             raise UnauthorizedError('Пользователь не найден')
 
         notification = await self._email_notification_service.get_valid_notification(
-            user_id=request.user_id,
-            code=request.code,
+            user_id=params.user_id,
+            code=params.code,
             action=EmailNotificationAction.PASSWORD_RESET,
         )
 

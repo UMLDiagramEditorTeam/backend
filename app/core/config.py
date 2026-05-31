@@ -77,7 +77,6 @@ class SMTPSettings(BaseSettings):
 class EmailSettings(BaseSettings):
     from_email: str = 'noreply@example.com'
     from_name: str = 'UML Diagram Editor'
-    template_folder: str = 'app/templates/email'
     account_confirmation_subject: str = 'Account confirmation'
     password_reset_subject: str = 'Password reset confirmation'
     account_confirmation_path: str = '/auth/confirm'
@@ -87,8 +86,9 @@ class EmailSettings(BaseSettings):
 class FrontendSettings(BaseSettings):
     scheme: str = 'http'
     host: str = 'localhost'
-    port: int | None = 3000
+    port: int | None = 5173
 
+    @computed_field
     @property
     def origin(self) -> str:
         if self.port is None:
@@ -105,7 +105,7 @@ class CommonSettings(BaseSettings):
     def host(self) -> str:
         if self.debug:
             return f'http://localhost:{self.port}'
-        return 'https://example.com'
+        return 'http://localhost'
 
 
 class Settings(BaseSettings):
@@ -121,12 +121,20 @@ class Settings(BaseSettings):
     rbac: RBACSettings
     email: EmailSettings
     smtp: SMTPSettings
-    frontend: FrontendSettings
     common: CommonSettings
+    frontend: FrontendSettings
 
     @property
     def database_url(self) -> str:
         return self.db.url
+
+    @property
+    def account_confirmation_url(self) -> str:
+        return self.frontend.origin + self.email.account_confirmation_path
+
+    @property
+    def password_reset_url(self) -> str:
+        return self.frontend.origin + self.email.password_reset_path
 
 
 @lru_cache

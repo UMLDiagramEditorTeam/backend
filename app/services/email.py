@@ -6,6 +6,7 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from app.core.config import settings
 from app.models.email_notifications import EmailNotificationAction
 from app.models.users import UserModel
+from app.templates.templates_env import templates_dir
 
 
 @dataclass(frozen=True)
@@ -30,7 +31,7 @@ class EmailService:
                 MAIL_SSL_TLS=settings.smtp.ssl_tls,
                 USE_CREDENTIALS=settings.smtp.use_credentials,
                 VALIDATE_CERTS=settings.smtp.validate_certs,
-                TEMPLATE_FOLDER=settings.email.template_folder,
+                TEMPLATE_FOLDER=templates_dir,
             )
         )
 
@@ -47,8 +48,8 @@ class EmailService:
             options=EmailNotificationOptions(
                 action=EmailNotificationAction.ACCOUNT_CONFIRMATION,
                 subject=settings.email.account_confirmation_subject,
-                template_name='account_confirmation.html',
-                url=settings.email.account_confirmation_url,
+                template_name='email/account_confirmation.html',
+                url=settings.account_confirmation_url,
             ),
         )
 
@@ -65,8 +66,8 @@ class EmailService:
             options=EmailNotificationOptions(
                 action=EmailNotificationAction.PASSWORD_RESET,
                 subject=settings.email.password_reset_subject,
-                template_name='password_reset.html',
-                url=settings.email.password_reset_url,
+                template_name='email/password_reset.html',
+                url=settings.password_reset_url,
             ),
         )
 
