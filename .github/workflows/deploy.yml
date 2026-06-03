@@ -54,6 +54,7 @@ jobs:
       DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME }}
       DOCKER_USER: ${{ vars.DOCKER_USER }}
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      DOCKER_BUILDKIT: "1"
 
     steps:
       - name: Checkout repository
