@@ -74,6 +74,9 @@ jobs:
           vm-host: ${{ vars.VM_HOST }}
           vm-user: ${{ vars.VM_USER }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Lint Ansible playbooks
         run: |
           ansible-lint \
