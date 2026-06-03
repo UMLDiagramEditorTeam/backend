@@ -1,0 +1,103 @@
+---
+- name: Initialize production VM
+  hosts: production
+  become: true
+  gather_facts: true
+
+  vars:
+    deploy_path: >-
+      {{ lookup('ansible.builtin.env', 'DEPLOY_PATH') |
+      default('/opt/uml-diagram-editor', true) }}
+    docker_apt_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+    docker_apt_arch: >-
+      {{ docker_apt_arch_map.get(ansible_facts.architecture,
+      ansible_facts.architecture) }}
+
+  tasks:
+    - name: Install base system packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - python3-debian
+          - python3-docker
+          - rsync
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Create apt keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Download Docker apt repository key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Remove legacy Docker apt repository list
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/docker.list
+        state: absent
+
+    - name: Add Docker apt repository
+      ansible.builtin.deb822_repository:
+        name: docker
+        types:
+          - deb
+        uris:
+          - https://download.docker.com/linux/debian
+        suites:
+          - "{{ ansible_facts.distribution_release }}"
+        components:
+          - stable
+        architectures:
+          - "{{ docker_apt_arch }}"
+        signed_by: /etc/apt/keyrings/docker.asc
+        state: present
+
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        name:
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-ce
+          - docker-ce-cli
+          - docker-compose-plugin
+        state: present
+
+    - name: Ensure Docker service is enabled and running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Create application deploy directory
+      ansible.builtin.file:
+        path: "{{ deploy_path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Verify Docker is available
+      community.docker.docker_host_info:
+      register: docker_host_info
+
+    - name: Show Docker server version
+      ansible.builtin.debug:
+        msg: "Docker server version: {{ docker_host_info.host_info.ServerVersion }}"

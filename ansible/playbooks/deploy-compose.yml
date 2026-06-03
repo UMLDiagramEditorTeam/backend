@@ -1,0 +1,132 @@
+---
+- name: Update compose file and restart application
+  hosts: production
+  become: true
+  gather_facts: false
+
+  vars:
+    source_root: "{{ playbook_dir }}/../.."
+    deploy_path: >-
+      {{ lookup('ansible.builtin.env', 'DEPLOY_PATH') |
+      default('/opt/uml-diagram-editor', true) }}
+    env_file_path: >-
+      {{ lookup('ansible.builtin.env', 'ENV_FILE_PATH') |
+      default(source_root + '/.env', true) }}
+    docker_user: "{{ lookup('ansible.builtin.env', 'DOCKER_USER') }}"
+    docker_token: "{{ lookup('ansible.builtin.env', 'DOCKER_TOKEN') | default('', true) }}"
+    docker_image_name: "{{ lookup('ansible.builtin.env', 'DOCKER_IMAGE_NAME') }}"
+    docker_image_tag: >-
+      {{ lookup('ansible.builtin.env', 'DOCKER_IMAGE_TAG') | default('latest', true) }}
+    back_image: "{{ docker_user }}/{{ docker_image_name }}:{{ docker_image_tag }}"
+    front_image: nginx:stable-alpine
+
+  tasks:
+    - name: Validate deployment variables
+      ansible.builtin.assert:
+        that:
+          - docker_user | length > 0
+          - docker_image_name | length > 0
+          - docker_image_tag | length > 0
+        fail_msg: >-
+          DOCKER_USER, DOCKER_IMAGE_NAME and DOCKER_IMAGE_TAG are required.
+
+    - name: Check local env file
+      ansible.builtin.stat:
+        path: "{{ env_file_path }}"
+      delegate_to: localhost
+      become: false
+      register: local_env_file
+
+    - name: Validate local env file exists
+      ansible.builtin.assert:
+        that:
+          - local_env_file.stat.exists
+        fail_msg: >-
+          Env file was not found. Set ENV_FILE_PATH or create .env before deploy.
+
+    - name: Create deployment directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "{{ item.mode }}"
+      loop:
+        - path: "{{ deploy_path }}"
+          mode: "0755"
+        - path: "{{ deploy_path }}/nginx"
+          mode: "0755"
+        - path: "{{ deploy_path }}/nginx/html"
+          mode: "0755"
+
+    - name: Check existing compose file
+      ansible.builtin.stat:
+        path: "{{ deploy_path }}/docker-compose.yml"
+      register: remote_compose_file
+
+    - name: Read existing compose file
+      ansible.builtin.slurp:
+        path: "{{ deploy_path }}/docker-compose.yml"
+      register: remote_compose
+      when: remote_compose_file.stat.exists
+
+    - name: Preserve current frontend image from compose
+      ansible.builtin.set_fact:
+        front_image: >-
+          {{ (remote_compose.content | b64decode | from_yaml)['x-front-image'].image |
+          default(front_image) }}
+      when: remote_compose_file.stat.exists
+
+    - name: Copy application env file
+      ansible.builtin.copy:
+        src: "{{ env_file_path }}"
+        dest: "{{ deploy_path }}/.env"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Copy nginx config
+      ansible.builtin.copy:
+        src: "{{ source_root }}/nginx/nginx.conf"
+        dest: "{{ deploy_path }}/nginx/nginx.conf"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Copy nginx static files
+      ansible.builtin.copy:
+        src: "{{ source_root }}/nginx/html/"
+        dest: "{{ deploy_path }}/nginx/html/"
+        owner: root
+        group: root
+        mode: "0644"
+        directory_mode: "0755"
+
+    - name: Render compose file
+      ansible.builtin.template:
+        src: "{{ source_root }}/ansible/templates/docker-compose.yml.j2"
+        dest: "{{ deploy_path }}/docker-compose.yml"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Log in to Docker registry
+      community.docker.docker_login:
+        username: "{{ docker_user }}"
+        password: "{{ docker_token }}"
+      when: docker_token | length > 0
+
+    - name: Pull and start compose services
+      community.docker.docker_compose_v2:
+        project_src: "{{ deploy_path }}"
+        files:
+          - docker-compose.yml
+        state: present
+        pull: always
+        remove_orphans: true
+
+    - name: Remove unused Docker images
+      community.docker.docker_prune:
+        images: true
+        images_filters:
+          dangling: false
