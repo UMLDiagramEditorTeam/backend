@@ -89,6 +89,6 @@ jobs:
 
       - name: Deploy compose
         env:
-          ENV_FILE_PATH: .env.production
+          ENV_FILE_PATH: ${{ github.workspace }}/.env.production
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
         run: ansible-playbook ansible/playbooks/deploy-compose.yml
