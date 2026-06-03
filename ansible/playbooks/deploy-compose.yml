@@ -123,7 +123,7 @@
         files:
           - docker-compose.yml
         state: present
-        pull: always
+        pull: missing
         remove_orphans: true
 
     - name: Remove unused Docker images
