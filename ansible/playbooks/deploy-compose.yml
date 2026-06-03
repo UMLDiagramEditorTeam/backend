@@ -19,6 +19,7 @@
       {{ lookup('ansible.builtin.env', 'DOCKER_IMAGE_TAG') | default('latest', true) }}
     back_image: "{{ docker_user }}/{{ docker_image_name }}:{{ docker_image_tag }}"
     front_image: nginx:stable-alpine
+    npm_https_port: "{{ lookup('ansible.builtin.env', 'NPM_HTTPS_PORT') | default('8443', true) }}"
 
   tasks:
     - name: Validate deployment variables

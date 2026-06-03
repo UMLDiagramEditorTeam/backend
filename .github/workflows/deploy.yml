@@ -55,6 +55,7 @@ jobs:
       DOCKER_USER: ${{ vars.DOCKER_USER }}
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
       DOCKER_BUILDKIT: "1"
+      NPM_HTTPS_PORT: ${{ vars.NPM_HTTPS_PORT }}
 
     steps:
       - name: Checkout repository

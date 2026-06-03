@@ -20,6 +20,7 @@ Variables:
 VM_HOST=77.110.117.83
 VM_USER=root
 DEPLOY_PATH=/opt/uml-diagram-editor
+NPM_HTTPS_PORT=8443
 ```
 
 `SSH_PRIVATE_KEY_B64` is the private SSH key encoded as base64.
@@ -67,7 +68,7 @@ After HTTPS is configured through DuckDNS and Nginx Proxy Manager:
 ```text
 FRONTEND__SCHEME=https
 FRONTEND__HOST=<duckdns-domain>
-FRONTEND__PORT=
+FRONTEND__PORT=8443
 ```
 
 Generate `AUTH__JWT_PRIVATE_KEY` with:
