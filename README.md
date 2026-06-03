@@ -62,6 +62,22 @@ openssl rand -hex 32
 ```bash
 docker compose up
 ```
+
+## Деплой
+
+Деплой выполняется через GitHub Actions, Ansible и Docker Hub.
+Инфраструктурные значения хранятся в GitHub Variables и Secrets.
+
+- `Init VM` - ручная инициализация ВМ
+- `Release And Deploy` - создание релизного тега, сборка Docker-образа и обновление compose на ВМ
+
+Production URL:
+
+```text
+https://umldiagrameditor.duckdns.org:8443
+```
+
+
 ## До запуска проекта
 
 Клонирование репозитория

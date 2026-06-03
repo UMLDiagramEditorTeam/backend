@@ -1,0 +1,96 @@
+name: Setup Ansible
+description: Install Ansible dependencies and configure SSH access to the VM.
+
+inputs:
+  python-version:
+    description: Python version used by the Ansible controller.
+    required: false
+    default: "3.13"
+  ssh-private-key-b64:
+    description: Base64-encoded private SSH key.
+    required: true
+  ssh-known-hosts:
+    description: Known hosts content. If empty, ssh-keyscan will be used.
+    required: false
+    default: ""
+  vm-host:
+    description: VM host used for ssh-keyscan fallback.
+    required: true
+  vm-user:
+    description: SSH user for the VM.
+    required: true
+  lint-playbooks:
+    description: Run ansible-lint for project playbooks.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Ansible
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install ansible ansible-lint docker requests
+        ansible-galaxy collection install -r ansible/requirements.yml
+
+    - name: Configure SSH
+      shell: bash
+      env:
+        SSH_PRIVATE_KEY_B64: ${{ inputs.ssh-private-key-b64 }}
+        SSH_KNOWN_HOSTS: ${{ inputs.ssh-known-hosts }}
+        VM_HOST: ${{ inputs.vm-host }}
+      run: |
+        mkdir -p ~/.ssh
+        if [ -z "$SSH_PRIVATE_KEY_B64" ]; then
+          echo "SSH_PRIVATE_KEY_B64 is empty or unavailable"
+          exit 1
+        fi
+
+        printf '%s' "$SSH_PRIVATE_KEY_B64" | tr -d '\r\n ' | base64 --decode > ~/.ssh/cloud-vm
+        chmod 600 ~/.ssh/cloud-vm
+        ssh-keygen -y -f ~/.ssh/cloud-vm > /dev/null
+
+        if [ -n "$SSH_KNOWN_HOSTS" ]; then
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        else
+          ssh-keyscan -H "$VM_HOST" > ~/.ssh/known_hosts
+        fi
+
+        chmod 644 ~/.ssh/known_hosts
+
+    - name: Configure Ansible inventory
+      shell: bash
+      env:
+        VM_HOST: ${{ inputs.vm-host }}
+        VM_USER: ${{ inputs.vm-user }}
+      run: |
+        {
+          echo '[production]'
+          echo "vm ansible_host=$VM_HOST ansible_user=$VM_USER ansible_ssh_private_key_file=~/.ssh/cloud-vm ansible_python_interpreter=/usr/bin/python3"
+          echo
+          echo '[local]'
+          echo 'localhost ansible_connection=local'
+        } > ansible/inventories/production.ini
+
+        echo "ANSIBLE_CONFIG=$GITHUB_WORKSPACE/ansible/ansible.cfg" >> "$GITHUB_ENV"
+
+    - name: Check Ansible installation
+      shell: bash
+      run: |
+        ansible --version
+        ansible-lint --version
+
+    - name: Lint Ansible playbooks
+      if: inputs.lint-playbooks == 'true'
+      shell: bash
+      run: |
+        ansible-lint \
+          ansible/playbooks/init-vm.yml \
+          ansible/playbooks/build-and-push.yml \
+          ansible/playbooks/deploy-compose.yml

@@ -1,0 +1,30 @@
+name: Init VM
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  init-vm:
+    name: Initialize production VM
+    runs-on: ubuntu-latest
+    if: github.ref_name == github.event.repository.default_branch
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ansible
+        uses: ./.github/actions/setup-ansible
+        with:
+          ssh-private-key-b64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
+          ssh-known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          vm-host: ${{ vars.VM_HOST }}
+          vm-user: ${{ vars.VM_USER }}
+
+      - name: Run VM initialization playbook
+        env:
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        run: ansible-playbook ansible/playbooks/init-vm.yml

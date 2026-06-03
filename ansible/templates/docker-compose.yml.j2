@@ -1,10 +1,10 @@
 name: uml-diagram-editor
 
 x-back-image: &back-image
-  image: umldiagrameditor/uml-diagram-editor-api:latest
+  image: {{ back_image }}
 
 x-front-image: &front-image
-  image: nginx:stable-alpine
+  image: {{ front_image }}
 
 x-back-base: &back-base
   <<: *back-image
@@ -39,6 +39,7 @@ services:
       db:
         condition: service_healthy
     command: ["alembic", "upgrade", "head"]
+
   rbac:
     <<: *back-base
     restart: on-failure
@@ -46,6 +47,7 @@ services:
       alembic:
         condition: service_completed_successfully
     command: ["python3", "init.py"]
+
   api:
     <<: *back-base
     depends_on:
@@ -58,6 +60,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
   web:
     <<: *front-image
     restart: always
@@ -76,7 +79,7 @@ services:
     ports:
       - "80:80"
       - "81:81"
-      - "8443:443"
+      - "{{ npm_https_port }}:443"
     volumes:
       - npm_data:/data
       - npm_letsencrypt:/etc/letsencrypt
