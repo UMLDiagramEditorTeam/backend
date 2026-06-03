@@ -62,6 +62,65 @@ openssl rand -hex 32
 ```bash
 docker compose up
 ```
+
+## Деплой
+
+Деплой выполняется через GitHub Actions, Ansible, Docker Hub и ВМ на Debian.
+
+Workflow `Init VM` запускается вручную и устанавливает на ВМ необходимые утилиты.
+
+Workflow `Release And Deploy` создает тег через semantic-release, собирает и публикует Docker-образ, затем обновляет `docker-compose.yml` на ВМ.
+
+Переменные и секреты организации:
+
+```text
+SSH_PRIVATE_KEY_B64
+ENV
+VM_HOST=77.110.117.83
+VM_USER=root
+DEPLOY_PATH=/opt/uml-diagram-editor
+NPM_HTTPS_PORT=8443
+```
+
+`SSH_PRIVATE_KEY_B64` - приватный SSH-ключ в base64.
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\Users\User\.ssh\cloud-vm"))
+```
+
+`ENV` - полное содержимое production `.env`.
+
+Переменные и секреты репозитория:
+
+```text
+DOCKER_TOKEN
+GH_TOKEN
+DOCKER_USER=umldiagrameditor
+DOCKER_IMAGE_NAME=uml-diagram-editor-api
+```
+
+Для production-деплоя через DuckDNS и Nginx Proxy Manager:
+
+```text
+FRONTEND__SCHEME=https
+FRONTEND__HOST=umldiagrameditor.duckdns.org
+FRONTEND__PORT=8443
+```
+
+Production URL:
+
+```text
+https://umldiagrameditor.duckdns.org:8443
+```
+
+Проверка на ВМ:
+
+```bash
+cd /opt/uml-diagram-editor
+docker compose ps
+curl -I http://localhost/api/v1/health/
+```
+
 ## До запуска проекта
 
 Клонирование репозитория
