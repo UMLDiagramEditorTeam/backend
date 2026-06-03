@@ -24,13 +24,6 @@ jobs:
           vm-host: ${{ vars.VM_HOST }}
           vm-user: ${{ vars.VM_USER }}
 
-      - name: Lint Ansible playbooks
-        run: |
-          ansible-lint \
-            ansible/playbooks/init-vm.yml \
-            ansible/playbooks/build-and-push.yml \
-            ansible/playbooks/deploy-compose.yml
-
       - name: Run VM initialization playbook
         env:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}

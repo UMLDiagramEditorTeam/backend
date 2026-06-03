@@ -78,13 +78,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Lint Ansible playbooks
-        run: |
-          ansible-lint \
-            ansible/playbooks/init-vm.yml \
-            ansible/playbooks/build-and-push.yml \
-            ansible/playbooks/deploy-compose.yml
-
       - name: Build and push Docker image
         run: ansible-playbook ansible/playbooks/build-and-push.yml
 

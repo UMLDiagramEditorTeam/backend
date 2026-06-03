@@ -19,6 +19,10 @@ inputs:
   vm-user:
     description: SSH user for the VM.
     required: true
+  lint-playbooks:
+    description: Run ansible-lint for project playbooks.
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -81,3 +85,12 @@ runs:
       run: |
         ansible --version
         ansible-lint --version
+
+    - name: Lint Ansible playbooks
+      if: inputs.lint-playbooks == 'true'
+      shell: bash
+      run: |
+        ansible-lint \
+          ansible/playbooks/init-vm.yml \
+          ansible/playbooks/build-and-push.yml \
+          ansible/playbooks/deploy-compose.yml
