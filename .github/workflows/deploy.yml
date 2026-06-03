@@ -3,7 +3,7 @@ name: Release And Deploy
 on:
   push:
     branches:
-      - main
+      - ci-cd
 
 permissions:
   contents: write
