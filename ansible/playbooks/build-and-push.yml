@@ -1,0 +1,49 @@
+---
+- name: Build and push application Docker image
+  hosts: local
+  gather_facts: false
+
+  vars:
+    source_root: "{{ playbook_dir }}/../.."
+    docker_user: "{{ lookup('ansible.builtin.env', 'DOCKER_USER') }}"
+    docker_token: "{{ lookup('ansible.builtin.env', 'DOCKER_TOKEN') }}"
+    docker_image_name: "{{ lookup('ansible.builtin.env', 'DOCKER_IMAGE_NAME') }}"
+    docker_image_tag: >-
+      {{ lookup('ansible.builtin.env', 'DOCKER_IMAGE_TAG') | default('latest', true) }}
+    docker_image_repository: "{{ docker_user }}/{{ docker_image_name }}"
+
+  tasks:
+    - name: Validate Docker image variables
+      ansible.builtin.assert:
+        that:
+          - docker_user | length > 0
+          - docker_token | length > 0
+          - docker_image_name | length > 0
+          - docker_image_tag | length > 0
+        fail_msg: >-
+          DOCKER_USER, DOCKER_TOKEN, DOCKER_IMAGE_NAME and DOCKER_IMAGE_TAG
+          are required.
+
+    - name: Log in to Docker registry
+      community.docker.docker_login:
+        username: "{{ docker_user }}"
+        password: "{{ docker_token }}"
+
+    - name: Build and push Docker image
+      ansible.builtin.command:
+        argv:
+          - docker
+          - buildx
+          - build
+          - --pull
+          - --push
+          - --tag
+          - "{{ docker_image_repository }}:{{ docker_image_tag }}"
+          - "{{ source_root }}"
+      environment:
+        DOCKER_BUILDKIT: "1"
+      changed_when: true
+
+    - name: Show pushed Docker image
+      ansible.builtin.debug:
+        msg: "Pushed image {{ docker_image_repository }}:{{ docker_image_tag }}"

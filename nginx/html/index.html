@@ -34,7 +34,7 @@
     <script>
         document.getElementById('time').innerHTML = new Date().toLocaleString();
 
-        fetch('/api/v1/health')
+        fetch('/api/v1/health/')
             .then(r => r.ok ? document.getElementById('api').innerHTML = '✅ доступен' : '❌ ошибка')
             .catch(() => document.getElementById('api').innerHTML = '❌ недоступен');
     </script>
