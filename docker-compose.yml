@@ -61,14 +61,18 @@ services:
   web:
     <<: *front-image
     restart: always
-    expose:
-      - "80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/html:/var/www/html:ro
     depends_on:
       api:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   nginx-proxy-manager:
     image: jc21/nginx-proxy-manager:latest
@@ -82,7 +86,7 @@ services:
       - npm_letsencrypt:/etc/letsencrypt
     depends_on:
       web:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
   pg_data:
