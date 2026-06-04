@@ -80,18 +80,44 @@ services:
   nginx-proxy-manager:
     image: jc21/nginx-proxy-manager:latest
     restart: always
+    environment:
+      TZ: Russia/Moscow
+      DB_POSTGRES_HOST: proxy_db
+      DB_POSTGRES_PORT: "5432"
+      DB_POSTGRES_USER: ${DB__USER}
+      DB_POSTGRES_PASSWORD: ${DB__PASSWORD}
+      DB_POSTGRES_NAME: proxy
     ports:
       - "80:80"
       - "81:81"
-      - "{{ npm_https_port }}:443"
+      - "8443:443"
     volumes:
       - npm_data:/data
       - npm_letsencrypt:/etc/letsencrypt
     depends_on:
+      proxy_db:
+        condition: service_healthy
       web:
         condition: service_healthy
 
+  proxy_db:
+    image: postgres:18-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB__USER}
+      POSTGRES_PASSWORD: ${DB__PASSWORD}
+      POSTGRES_DB: proxy
+    volumes:
+      - proxy_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 volumes:
   pg_data:
+  proxy_pgdata:
   npm_data:
   npm_letsencrypt:
