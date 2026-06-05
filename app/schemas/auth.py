@@ -27,7 +27,7 @@ class SuccessResponse(BaseModel):
     success: bool = True
 
 
-class AccountConfirmationRequest(BaseModel):
+class ConfirmationRequest(BaseModel):
     user_id: UUID
     code: str
 
@@ -37,7 +37,5 @@ class PasswordResetRequest(BaseModel):
 
 
 class PasswordChangeRequest(BaseModel):
-    user_id: UUID
-    code: str
     password: str = Field(max_length=50, min_length=6)
     password_confirm: str = Field(max_length=50, min_length=6)

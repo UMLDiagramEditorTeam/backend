@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.dependencies.routers import InterfaceVerifiedDep, WindowVerifiedDep
+from app.dependencies.routers import InterfaceVerifiedDep, WindowStandaloneVerifiedDep
 from app.dependencies.services import InterfaceServiceDep
 from app.models.interfaces import InterfaceCreate, InterfacePublic, InterfaceUpdate
 from app.schemas.base import PaginatedResponse
@@ -18,7 +18,7 @@ router = APIRouter(prefix='/windows/{window_id}/interfaces', tags=['Interfaces']
     status_code=status.HTTP_200_OK,
 )
 async def get_interfaces(
-    window: WindowVerifiedDep,
+    window: WindowStandaloneVerifiedDep,
     interface_service: InterfaceServiceDep,
     filters: Annotated[InterfaceFilters, Query()],
 ) -> PaginatedResponse[InterfacePublic]:
@@ -39,7 +39,7 @@ async def get_interfaces(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_interface(
-    window: WindowVerifiedDep,
+    window: WindowStandaloneVerifiedDep,
     interface_create: InterfaceCreate,
     interface_service: InterfaceServiceDep,
 ) -> InterfacePublic:

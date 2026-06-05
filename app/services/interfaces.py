@@ -1,6 +1,7 @@
 from typing import Optional, Sequence
 from uuid import UUID
 
+from app.core.errors import ConflictError
 from app.dependencies.repositories import (
     InterfaceRepository,
     InterfaceRepositoryDep,
@@ -52,9 +53,23 @@ class InterfaceService:
     async def get_interface(self, interface_id: UUID) -> Optional[InterfaceModel]:
         return await self.__interface_repository.get(interface_id)
 
+    async def _assert_name_unique(
+        self, window_id: UUID, name: str, exclude_id: UUID | None = None
+    ) -> None:
+        existing = await self.__interface_repository.fetch(
+            window_id=window_id, name=name
+        )
+        for item in existing:
+            if exclude_id is None or item.id != exclude_id:
+                raise ConflictError(
+                    'Интерфейс с таким именем уже существует в данном окне'
+                )
+
     async def create_interface(
         self, window_id: UUID, interface_create: InterfaceCreate
     ) -> InterfaceModel:
+        await self._assert_name_unique(window_id, interface_create.name)
+
         tile = await self.__tile_service.create_tile(interface_create.tile)
 
         interface = InterfaceModel(
@@ -70,6 +85,10 @@ class InterfaceService:
         interface = await self.__interface_repository.get(interface_id)
         if interface is None:
             return None
+
+        await self._assert_name_unique(
+            interface.window_id, interface_update.name, exclude_id=interface_id
+        )
 
         tile = interface_update.tile
         interface_data = InterfaceModel(**interface_update.model_dump(exclude={'tile'}))
