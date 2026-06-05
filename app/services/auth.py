@@ -62,8 +62,27 @@ class AuthService:
         background_tasks: BackgroundTasks,
     ) -> UserModel:
         existing_user = await self.get_user_by_email(user_create.email)
+
         if existing_user is not None:
-            raise ConflictError('Пользователь с таким email уже существует')
+            if existing_user.status != UserStatus.CREATED:
+                raise ConflictError('Пользователь с таким email уже существует')
+
+            user_dump = user_create.model_dump()
+            password = str(user_dump.pop('password'))
+            existing_user.name = user_dump['name']
+            existing_user.password_hash = hash_password(password)
+            existing_user = await self._user_repository.save(existing_user)
+
+            code = await self._create_email_notification(
+                user=existing_user,
+                action=EmailNotificationAction.ACCOUNT_CONFIRMATION,
+            )
+            self._email_service.send_account_confirmation(
+                background_tasks=background_tasks,
+                user=existing_user,
+                code=code,
+            )
+            return existing_user
 
         user_dump = user_create.model_dump()
         password = str(user_dump.pop('password'))
