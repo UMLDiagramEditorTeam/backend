@@ -5,6 +5,7 @@ import jwt
 from jwt import InvalidTokenError
 
 from app.core.config import settings
+from app.core.errors import UnauthorizedError
 
 
 class TokenType:
@@ -67,13 +68,13 @@ def decode_token(token: str) -> dict:
             algorithms=[settings.auth.jwt_algorithm],
         )
     except InvalidTokenError as exc:
-        raise ValueError('Invalid token') from exc
+        raise UnauthorizedError('Невалидный токен') from exc
 
 
 def validate_token_type(payload: dict, expected_token_type: str) -> None:
     token_type = payload.get('token_type')
     if token_type != expected_token_type:
-        raise ValueError('Invalid token type')
+        raise UnauthorizedError('Неверный тип токена')
 
 
 def decode_access_token(token: str) -> dict:
