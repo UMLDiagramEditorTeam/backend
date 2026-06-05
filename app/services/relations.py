@@ -1,6 +1,9 @@
 from typing import Optional, Sequence
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
+
+from app.core.errors import ConflictError
 from app.dependencies.repositories import RelationRepository, RelationRepositoryDep
 from app.models.relations import RelationCreate, RelationModel, RelationUpdate
 from app.schemas.relations import RelationFilters
@@ -36,12 +39,18 @@ class RelationService:
             **relation_create.model_dump(),
             window_id=window_id,
         )
-        return await self.__relation_repository.save(relation)
+        try:
+            return await self.__relation_repository.save(relation)
+        except IntegrityError:
+            raise ConflictError('Связь между сущностями уже существует') from None
 
     async def update_relation(
         self, relation_id: UUID, relation_update: RelationUpdate
     ) -> Optional[RelationModel]:
-        return await self.__relation_repository.update(relation_id, relation_update)
+        try:
+            return await self.__relation_repository.update(relation_id, relation_update)
+        except IntegrityError:
+            raise ConflictError('Связь между сущностями уже существует') from None
 
     async def delete_relation(self, relation_id: UUID) -> Optional[RelationModel]:
         return await self.__relation_repository.delete(relation_id)

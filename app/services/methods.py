@@ -1,6 +1,7 @@
 from typing import Optional, Sequence
 from uuid import UUID
 
+from app.core.errors import ConflictError
 from app.dependencies.repositories import (
     MethodRepository,
     MethodRepositoryDep,
@@ -60,12 +61,34 @@ class MethodService:
     async def get_method(self, method_id: UUID) -> Optional[MethodModel]:
         return await self.__method_repository.get(method_id)
 
+    async def _assert_name_unique(
+        self,
+        name: str,
+        class_id: Optional[UUID] = None,
+        interface_id: Optional[UUID] = None,
+        exclude_id: UUID | None = None,
+    ) -> None:
+        existing = await self.__method_repository.fetch(
+            class_id=class_id,
+            interface_id=interface_id,
+            name=name,
+        )
+        for item in existing:
+            if exclude_id is None or item.id != exclude_id:
+                raise ConflictError(
+                    'Метод с таким именем уже существует в данном классе/интерфейсе'
+                )
+
     async def create_method(
         self,
         method_create: MethodCreate,
         class_id: Optional[UUID] = None,
         interface_id: Optional[UUID] = None,
     ) -> MethodModel:
+        await self._assert_name_unique(
+            method_create.name, class_id=class_id, interface_id=interface_id
+        )
+
         method_data = method_create.model_dump(exclude={'arguments'})
         method = MethodModel(
             **method_data, class_id=class_id, interface_id=interface_id
@@ -82,6 +105,17 @@ class MethodService:
         method_id: UUID,
         method_update: MethodUpdate,
     ) -> Optional[MethodModel]:
+        method = await self.__method_repository.get(method_id)
+        if method is None:
+            return None
+
+        await self._assert_name_unique(
+            method_update.name,
+            class_id=method.class_id,
+            interface_id=method.interface_id,
+            exclude_id=method_id,
+        )
+
         method = await self.__method_repository.update(method_id, method_update)
 
         await self.__argument_service.replace_method_arguments(
