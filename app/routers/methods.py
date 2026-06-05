@@ -4,9 +4,9 @@ from fastapi import APIRouter, Query, status
 
 from app.dependencies.routers import (
     ClassMethodVerifiedDep,
-    ClassVerifiedDep,
+    ClassStandaloneVerifiedDep,
     InterfaceMethodVerifiedDep,
-    InterfaceVerifiedDep,
+    InterfaceStandaloneVerifiedDep,
 )
 from app.dependencies.services import MethodServiceDep
 from app.models.methods import MethodCreate, MethodPublic, MethodUpdate
@@ -31,7 +31,7 @@ interface_methods_router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 async def get_class_methods(
-    class_obj: ClassVerifiedDep,
+    class_obj: ClassStandaloneVerifiedDep,
     method_service: MethodServiceDep,
     filters: Annotated[MethodFilters, Query()],
 ) -> PaginatedResponse[MethodPublic]:
@@ -52,7 +52,7 @@ async def get_class_methods(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_class_method(
-    class_obj: ClassVerifiedDep,
+    class_obj: ClassStandaloneVerifiedDep,
     method_create: MethodCreate,
     method_service: MethodServiceDep,
 ) -> MethodPublic:
@@ -95,7 +95,7 @@ async def delete_class_method(
     status_code=status.HTTP_200_OK,
 )
 async def get_interface_methods(
-    interface: InterfaceVerifiedDep,
+    interface: InterfaceStandaloneVerifiedDep,
     method_service: MethodServiceDep,
     filters: Annotated[MethodFilters, Query()],
 ) -> PaginatedResponse[MethodPublic]:
@@ -119,7 +119,7 @@ async def get_interface_methods(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_interface_method(
-    interface: InterfaceVerifiedDep,
+    interface: InterfaceStandaloneVerifiedDep,
     method_create: MethodCreate,
     method_service: MethodServiceDep,
 ) -> MethodPublic:

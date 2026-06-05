@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.dependencies.routers import RelationVerifiedDep, WindowVerifiedDep
+from app.dependencies.routers import RelationVerifiedDep, WindowStandaloneVerifiedDep
 from app.dependencies.services import RelationServiceDep
 from app.models.relations import RelationCreate, RelationPublic, RelationUpdate
 from app.schemas.base import PaginatedResponse
@@ -21,7 +21,7 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 async def get_relations(
-    window: WindowVerifiedDep,
+    window: WindowStandaloneVerifiedDep,
     relation_service: RelationServiceDep,
     filters: Annotated[RelationFilters, Query()],
 ) -> PaginatedResponse[RelationPublic]:
@@ -42,7 +42,7 @@ async def get_relations(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_relation(
-    window: WindowVerifiedDep,
+    window: WindowStandaloneVerifiedDep,
     relation_create: RelationCreate,
     relation_service: RelationServiceDep,
 ) -> RelationPublic:
