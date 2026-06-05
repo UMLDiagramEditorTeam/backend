@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.dependencies.routers import AttributeVerifiedDep, ClassVerifiedDep
+from app.dependencies.routers import AttributeVerifiedDep, ClassStandaloneVerifiedDep
 from app.dependencies.services import AttributeServiceDep
 from app.models.attributes import AttributeCreate, AttributePublic, AttributeUpdate
 from app.schemas.attributes import AttributeFilters
@@ -21,7 +21,7 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 async def get_attributes(
-    class_obj: ClassVerifiedDep,
+    class_obj: ClassStandaloneVerifiedDep,
     attribute_service: AttributeServiceDep,
     filters: Annotated[AttributeFilters, Query()],
 ) -> PaginatedResponse[AttributePublic]:
@@ -42,7 +42,7 @@ async def get_attributes(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_attribute(
-    class_obj: ClassVerifiedDep,
+    class_obj: ClassStandaloneVerifiedDep,
     attribute_create: AttributeCreate,
     attribute_service: AttributeServiceDep,
 ) -> AttributePublic:

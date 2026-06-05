@@ -1,14 +1,15 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.config import settings
 from app.dependencies.auth import AuthServiceDep, CurrentUserDep, RefreshTokenDep
 from app.models.users import UserCreate, UserPublic
 from app.schemas.auth import (
-    AccountConfirmationRequest,
+    ConfirmationRequest,
+    LoginRequest,
     PasswordChangeRequest,
     PasswordResetRequest,
     SuccessResponse,
@@ -58,7 +59,7 @@ async def register(
     status_code=status.HTTP_200_OK,
 )
 async def confirm_account(
-    request: AccountConfirmationRequest,
+    request: Annotated[ConfirmationRequest, Query()],
     auth_service: AuthServiceDep,
 ) -> UserPublic:
     return await auth_service.confirm_account(
@@ -72,6 +73,24 @@ async def confirm_account(
     status_code=status.HTTP_200_OK,
 )
 async def login(
+    auth_data: LoginRequest,
+    response: Response,
+    auth_service: AuthServiceDep,
+) -> TokenResponse:
+    tokens = await auth_service.login(
+        email=str(auth_data.email),
+        password=auth_data.password,
+    )
+    set_refresh_cookie(response, tokens.refresh_token)
+    return TokenResponse(access_token=tokens.access_token)
+
+
+@router.post(
+    '/token',
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+async def token(
     auth_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     response: Response,
     auth_service: AuthServiceDep,
@@ -80,12 +99,8 @@ async def login(
         email=auth_data.username,
         password=auth_data.password,
     )
-
     set_refresh_cookie(response, tokens.refresh_token)
-
-    return TokenResponse(
-        access_token=tokens.access_token,
-    )
+    return TokenResponse(access_token=tokens.access_token)
 
 
 @router.get(
@@ -146,8 +161,9 @@ async def request_password_reset(
     status_code=status.HTTP_200_OK,
 )
 async def change_password(
+    params: Annotated[ConfirmationRequest, Query()],
     request: PasswordChangeRequest,
     auth_service: AuthServiceDep,
 ) -> SuccessResponse:
-    await auth_service.change_password(request)
+    await auth_service.change_password(params, request)
     return SuccessResponse(success=True)

@@ -20,7 +20,7 @@ class AttributeBase(SQLModel):
 
 
 class AttributePublic(BaseModel, AttributeBase):
-    class_id: UUID = Field(foreign_key='class.id')
+    class_id: UUID = Field(foreign_key='class.id', ondelete='CASCADE')
 
 
 class AttributeCreate(AttributeBase):

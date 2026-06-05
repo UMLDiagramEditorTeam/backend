@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.dependencies.routers import ClassVerifiedDep, WindowVerifiedDep
+from app.dependencies.routers import ClassVerifiedDep, WindowStandaloneVerifiedDep
 from app.dependencies.services import ClassServiceDep
 from app.models.classes import ClassCreate, ClassPublic, ClassUpdate
 from app.schemas.base import PaginatedResponse
@@ -18,7 +18,7 @@ router = APIRouter(prefix='/windows/{window_id}/classes', tags=['Classes'])
     status_code=status.HTTP_200_OK,
 )
 async def get_classes(
-    window: WindowVerifiedDep,
+    window: WindowStandaloneVerifiedDep,
     class_service: ClassServiceDep,
     filters: Annotated[ClassFilters, Query()],
 ) -> PaginatedResponse[ClassPublic]:
@@ -39,7 +39,7 @@ async def get_classes(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_class(
-    window: WindowVerifiedDep,
+    window: WindowStandaloneVerifiedDep,
     class_create: ClassCreate,
     class_service: ClassServiceDep,
 ) -> ClassPublic:

@@ -89,7 +89,7 @@ paths:
       summary: Вход в систему
       requestBody:
         content:
-          application/x-www-form-urlencoded:
+          application/json:
             schema:
               $ref: "#/components/schemas/LoginRequest"
         required: true
@@ -2128,11 +2128,11 @@ components:
       - $ref: "#/components/schemas/ErrorResponse"
     LoginRequest:
       required:
-      - username
+      - email
       - password
       type: object
       properties:
-        username:
+        email:
           type: string
           example: user@example.com
         password:

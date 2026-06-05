@@ -1,6 +1,7 @@
 from typing import Optional, Sequence
 from uuid import UUID
 
+from app.core.errors import ConflictError
 from app.dependencies.repositories import (
     ClassRepository,
     ClassRepositoryDep,
@@ -44,9 +45,19 @@ class ClassService:
     async def get_class(self, class_id: UUID) -> Optional[ClassModel]:
         return await self.__class_repository.get(class_id)
 
+    async def _assert_name_unique(
+        self, window_id: UUID, name: str, exclude_id: UUID | None = None
+    ) -> None:
+        existing = await self.__class_repository.fetch(window_id=window_id, name=name)
+        for item in existing:
+            if exclude_id is None or item.id != exclude_id:
+                raise ConflictError('Класс с таким именем уже существует в данном окне')
+
     async def create_class(
         self, class_create: ClassCreate, window_id: UUID
     ) -> ClassModel:
+        await self._assert_name_unique(window_id, class_create.name)
+
         tile = await self.__tile_service.create_tile(class_create.tile)
 
         class_model = ClassModel(
@@ -64,6 +75,10 @@ class ClassService:
 
         if class_ is None:
             return None
+
+        await self._assert_name_unique(
+            class_.window_id, class_update.name, exclude_id=class_id
+        )
 
         tile = class_update.tile
         class_data = ClassModel(**class_update.model_dump(exclude={'tile'}))

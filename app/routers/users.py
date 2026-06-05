@@ -108,6 +108,6 @@ async def update_user_roles(
 ) -> UserPublic:
     user = await user_service.get_user(user_id)
     if user is None:
-        raise NotFoundError()
+        raise NotFoundError('Пользователь не найден')
 
     return await rbac_service.replace_user_roles(user, request.roles)

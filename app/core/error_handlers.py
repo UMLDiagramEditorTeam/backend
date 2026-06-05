@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from jwt import PyJWTError
 
+from app.core.errors import UnauthorizedError
 from app.core.responses import (
     auth_responses,
     bad_request_responses,
@@ -11,7 +12,7 @@ from app.core.responses import (
     conflict_responses,
     detail_responses,
 )
-from app.schemas.errors import InternalServerErrorSchema, UnauthorizedErrorSchema
+from app.schemas.errors import InternalServerErrorSchema
 from app.utils.logger import logger
 
 
@@ -31,11 +32,20 @@ async def exception_handler(
             **log_data,
         )
 
+        detail = [
+            {
+                'field': '.'.join(str(part) for part in err.get('loc', [])),
+                'message': err.get('msg', ''),
+                'code': err.get('type'),
+            }
+            for err in exc.errors()
+        ]
+
         return JSONResponse(
             status_code=422,
             content={
                 'message': 'Validation error',
-                'detail': exc.errors(),
+                'detail': detail,
             },
         )
 
@@ -47,7 +57,10 @@ async def exception_handler(
 
         return JSONResponse(
             status_code=401,
-            content=UnauthorizedErrorSchema().model_dump(),
+            content={
+                'message': UnauthorizedError.message,
+                'detail': None,
+            },
         )
 
     status_code = 500

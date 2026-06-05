@@ -16,7 +16,7 @@ class ProjectBase(SQLModel):
 
 
 class ProjectPublic(BaseModel, ProjectBase):
-    user_id: UUID = Field(foreign_key='user.id')
+    user_id: UUID = Field(foreign_key='user.id', ondelete='CASCADE')
 
 
 class ProjectCreate(ProjectBase):
@@ -31,6 +31,8 @@ class ProjectModel(ProjectPublic, table=True):
     __tablename__ = 'project'
 
     user: 'UserModel' = Relationship(back_populates='projects')
-    windows: list['WindowModel'] = Relationship(back_populates='project')
+    windows: list['WindowModel'] = Relationship(
+        back_populates='project', cascade_delete=True
+    )
 
     __table_args__ = (UniqueConstraint('user_id', 'name', name='uq_project_user_name'),)

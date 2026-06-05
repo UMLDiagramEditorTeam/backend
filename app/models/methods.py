@@ -37,14 +37,19 @@ class MethodUpdate(MethodBase):
 class MethodModel(BaseModel, MethodBase, table=True):
     __tablename__ = 'method'
 
-    class_id: UUID | None = Field(default=None, foreign_key='class.id')
-    interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
+    class_id: UUID | None = Field(
+        default=None, foreign_key='class.id', ondelete='CASCADE'
+    )
+    interface_id: UUID | None = Field(
+        default=None, foreign_key='interface.id', ondelete='CASCADE'
+    )
 
     class_: 'ClassModel' = Relationship(back_populates='methods')
     interface: 'InterfaceModel' = Relationship(back_populates='methods')
     arguments: list['ArgumentModel'] = Relationship(
         back_populates='method',
         sa_relationship_kwargs={'lazy': 'selectin'},
+        cascade_delete=True,
     )
 
     __table_args__ = (

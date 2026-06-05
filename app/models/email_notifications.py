@@ -18,7 +18,9 @@ class EmailNotificationAction(StrEnum):
 
 
 class EmailNotificationBase(BaseModel):
-    user_id: UUID = Field(foreign_key='user.id', nullable=False, index=True)
+    user_id: UUID = Field(
+        foreign_key='user.id', ondelete='CASCADE', nullable=False, index=True
+    )
     action: EmailNotificationAction = Field(nullable=False, index=True)
     code: str = Field(max_length=64, index=True)
     is_used: bool = Field(default=False, nullable=False)

@@ -32,14 +32,22 @@ class RelationBase(SQLModel):
     begin_type: RelationEndType = Field(default=RelationEndType.RELATION)
     end_type: RelationEndType = Field(default=RelationEndType.RELATION)
 
-    begin_class_id: UUID | None = Field(default=None, foreign_key='class.id')
-    begin_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
-    end_class_id: UUID | None = Field(default=None, foreign_key='class.id')
-    end_interface_id: UUID | None = Field(default=None, foreign_key='interface.id')
+    begin_class_id: UUID | None = Field(
+        default=None, foreign_key='class.id', ondelete='CASCADE'
+    )
+    begin_interface_id: UUID | None = Field(
+        default=None, foreign_key='interface.id', ondelete='CASCADE'
+    )
+    end_class_id: UUID | None = Field(
+        default=None, foreign_key='class.id', ondelete='CASCADE'
+    )
+    end_interface_id: UUID | None = Field(
+        default=None, foreign_key='interface.id', ondelete='CASCADE'
+    )
 
 
 class RelationPublic(BaseModel, RelationBase):
-    window_id: UUID | None = Field(foreign_key='window.id')
+    window_id: UUID = Field(foreign_key='window.id', ondelete='CASCADE')
 
 
 class RelationCreate(RelationBase):

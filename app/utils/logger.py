@@ -8,9 +8,7 @@ def configure_logging() -> None:
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
-            structlog.processors.TimeStamper(
-                fmt='iso',
-            ),
+            structlog.processors.TimeStamper(fmt='iso'),
             structlog.stdlib.add_log_level,
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
@@ -26,6 +24,8 @@ def configure_logging() -> None:
         stream=sys.stdout,
         level=logging.INFO,
     )
+
+    logging.getLogger('uvicorn.access').disabled = True
 
 
 logger = structlog.get_logger(__name__)
