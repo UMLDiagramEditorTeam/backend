@@ -116,7 +116,7 @@ class AuthService:
     async def confirm_account(self, user_id: UUID, code: str) -> UserModel:
         user = await self._user_repository.get(user_id)
         if user is None:
-            raise NotFoundError()
+            raise NotFoundError('Пользователь не найден')
 
         notification = await self._email_notification_service.get_valid_notification(
             user_id=user_id,

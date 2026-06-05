@@ -68,7 +68,7 @@ class RBACService:
     async def assign_role_to_user(self, user: UserModel, role_name: str) -> UserModel:
         role = await self.get_role_by_name(role_name)
         if role is None:
-            raise NotFoundError()
+            raise NotFoundError('Роль не найдена')
 
         links = await self._user_role_repo.fetch(
             user_id=user.id,
@@ -95,7 +95,7 @@ class RBACService:
         for role_name in role_names:
             role = await self.get_role_by_name(role_name)
             if role is None:
-                raise NotFoundError()
+                raise NotFoundError('Роль не найдена')
             roles.append(role)
 
         existing_links = await self._user_role_repo.fetch(user_id=user.id)
