@@ -1,4 +1,5 @@
 from fastapi import APIRouter, FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -20,6 +21,7 @@ from app.routers import (
     users,
     windows,
 )
+from app.utils.logger import configure_logging
 
 api_prefix = '/api'
 
@@ -33,6 +35,7 @@ limiter = Limiter(
     headers_enabled=True,
 )
 
+configure_logging()
 
 app = FastAPI(
     title='UML Diagram Editor API',
@@ -44,6 +47,7 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RequestValidationError, exception_handler)
 app.add_exception_handler(exc_class_or_status_code=Exception, handler=exception_handler)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
