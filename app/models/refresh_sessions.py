@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 
 
 class RefreshSessionBase(SQLModel):
-    user_id: UUID = Field(foreign_key='user.id', nullable=False, index=True)
+    user_id: UUID = Field(
+        foreign_key='user.id', ondelete='CASCADE', nullable=False, index=True
+    )
     access_jti: str = Field(max_length=64, index=True)
     refresh_jti: str = Field(max_length=64, unique=True, index=True)
     expires_at: datetime = Field(

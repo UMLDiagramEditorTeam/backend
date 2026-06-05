@@ -44,7 +44,9 @@ class UserModel(UserPublic, table=True):
     is_active: bool = Field(default=True, nullable=False)
     status: UserStatus = Field(default=UserStatus.CREATED, nullable=False)
 
-    projects: list['ProjectModel'] = Relationship(back_populates='user')
+    projects: list['ProjectModel'] = Relationship(
+        back_populates='user', cascade_delete=True
+    )
     roles: list['RoleModel'] = Relationship(
         back_populates='users',
         link_model=UserRoleLink,

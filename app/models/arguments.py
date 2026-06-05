@@ -17,7 +17,7 @@ class ArgumentBase(SQLModel):
 
 
 class ArgumentPublic(BaseModel, ArgumentBase):
-    method_id: UUID = Field(foreign_key='method.id')
+    method_id: UUID = Field(foreign_key='method.id', ondelete='CASCADE')
 
 
 class ArgumentCreate(ArgumentBase):

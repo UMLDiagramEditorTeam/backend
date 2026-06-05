@@ -40,23 +40,31 @@ class ClassUpdate(ClassBase):
 class ClassModel(BaseModel, ClassBase, table=True):
     __tablename__ = 'class'
 
-    tile_id: UUID | None = Field(default=None, foreign_key='tile.id')
-    window_id: UUID = Field(foreign_key='window.id')
+    tile_id: UUID | None = Field(
+        default=None, foreign_key='tile.id', ondelete='SET NULL'
+    )
+    window_id: UUID = Field(foreign_key='window.id', ondelete='CASCADE')
 
     window: 'WindowModel' = Relationship(back_populates='classes')
     tile: 'TileModel' = Relationship(
         back_populates='classes',
         sa_relationship_kwargs={'lazy': 'selectin'},
     )
-    attributes: list['AttributeModel'] = Relationship(back_populates='class_')
-    methods: list['MethodModel'] = Relationship(back_populates='class_')
+    attributes: list['AttributeModel'] = Relationship(
+        back_populates='class_', cascade_delete=True
+    )
+    methods: list['MethodModel'] = Relationship(
+        back_populates='class_', cascade_delete=True
+    )
     relations_start: list['RelationModel'] = Relationship(
         back_populates='begin_class',
         sa_relationship_kwargs={'foreign_keys': 'RelationModel.begin_class_id'},
+        cascade_delete=True,
     )
     relations_end: list['RelationModel'] = Relationship(
         back_populates='end_class',
         sa_relationship_kwargs={'foreign_keys': 'RelationModel.end_class_id'},
+        cascade_delete=True,
     )
 
     __table_args__ = (

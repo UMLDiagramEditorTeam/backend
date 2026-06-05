@@ -62,7 +62,8 @@ class RBACService:
         if role:
             return role
 
-        return await self._role_repo.save(RoleModel(name=name, description=description))
+        await self._role_repo.save(RoleModel(name=name, description=description))
+        return await self.get_role_by_name(name)  # type: ignore[return-value]
 
     async def assign_role_to_user(self, user: UserModel, role_name: str) -> UserModel:
         role = await self.get_role_by_name(role_name)

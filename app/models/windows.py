@@ -14,7 +14,7 @@ class WindowBase(SQLModel):
 
 
 class WindowPublic(BaseModel, WindowBase):
-    project_id: UUID = Field(foreign_key='project.id')
+    project_id: UUID = Field(foreign_key='project.id', ondelete='CASCADE')
 
 
 class WindowCreate(WindowBase):
@@ -28,10 +28,16 @@ class WindowUpdate(WindowBase):
 class WindowModel(WindowPublic, table=True):
     __tablename__ = 'window'
 
-    classes: list['ClassModel'] = Relationship(back_populates='window')
-    interfaces: list['InterfaceModel'] = Relationship(back_populates='window')
+    classes: list['ClassModel'] = Relationship(
+        back_populates='window', cascade_delete=True
+    )
+    interfaces: list['InterfaceModel'] = Relationship(
+        back_populates='window', cascade_delete=True
+    )
     project: 'ProjectModel' = Relationship(back_populates='windows')
-    relations: list['RelationModel'] = Relationship(back_populates='window')
+    relations: list['RelationModel'] = Relationship(
+        back_populates='window', cascade_delete=True
+    )
 
     __table_args__ = (
         UniqueConstraint('project_id', 'name', name='uq_window_project_name'),
