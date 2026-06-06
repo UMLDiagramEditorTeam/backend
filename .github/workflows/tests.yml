@@ -1,0 +1,68 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  test:
+    name: Pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --group dev --no-install-project
+
+      - name: Create test env file
+        run: cp .env.example .env
+
+      - name: Run pytest
+        run: |
+          set -o pipefail
+          uv run pytest \
+            --junitxml=pytest-report.xml \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml | tee pytest-coverage.txt
+
+      - name: Publish pytest report
+        uses: dorny/test-reporter@v2
+        if: always()
+        with:
+          name: Pytest report
+          path: pytest-report.xml
+          reporter: java-junit
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pytest-reports
+          path: |
+            pytest-report.xml
+            pytest-coverage.txt
+            coverage.xml
