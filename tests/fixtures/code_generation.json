@@ -1,0 +1,36 @@
+{
+  "project": {
+    "name": "Smoke UML project",
+    "description": "Project created by API smoke tests"
+  },
+  "window": {
+    "name": "Main class diagram"
+  },
+  "class": {
+    "name": "GreetingService",
+    "access_modifier": "public",
+    "is_abstract": false,
+    "tile": {
+      "x": 10,
+      "y": 20,
+      "width": 240,
+      "height": 180
+    }
+  },
+  "method": {
+    "name": "greet",
+    "access_modifier": "public",
+    "return_type": "String",
+    "is_final": false,
+    "is_static": false,
+    "is_abstract": false,
+    "arguments": [
+      {
+        "name": "name",
+        "type": "String",
+        "order_num": 0,
+        "default_value": null
+      }
+    ]
+  }
+}
